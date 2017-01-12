@@ -14,8 +14,12 @@
 
 #include "graphics.h"
 
+#define WALL_COLOUR 2
+
 /*Extension forward declarations*/
 void BuildWorld();
+void ChangeWalls();
+void OuterWalls();
 
 	/* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
@@ -187,6 +191,8 @@ float *la;
 
    } else {
 
+
+      ChangeWalls();
        ////////// GAME LOGIC HERE //////////////////////////////////////////////
 
    }
@@ -276,6 +282,10 @@ int i, j, k;
 
        BuildWorld();
 
+       /* create sample player */
+       createPlayer(0, 52.0, 1.0, 52.0, 0.0);
+
+
    }
 
 
@@ -291,9 +301,8 @@ int i, j, k;
 
 
 void BuildWorld(){
-    int rnd;
     int offset;
-    int i, j, k;
+    int i, j, k, rnd;
 
     /* initialize world to empty */
     for(i=0; i<WORLDX; i++)
@@ -308,15 +317,7 @@ void BuildWorld(){
         }
     }
 
-    /* blue box shows xy bounds of the world */
-    for(i=0; i<WORLDX-1; i++) {
-        world[i][1][0] = 2;
-        world[i][1][WORLDZ-1] = 2;
-    }
-    for(i=0; i<WORLDZ-1; i++) {
-        world[0][1][i] = 2;
-        world[WORLDX-1][1][i] = 2;
-    }
+    OuterWalls();
 
     //Randomize walls running along the x axis
     for(i=0; i<WORLDX-2; i+=10){
@@ -327,7 +328,7 @@ void BuildWorld(){
 
             if(rnd == 0){
                 for(offset = 1; offset < 10; offset++){
-                    world[i + offset][1][j] = 2;
+                    world[i + offset][1][j] = WALL_COLOUR;
                 }
             }
 
@@ -343,15 +344,92 @@ void BuildWorld(){
 
             if(rnd == 0){
                 for(offset = 1; offset < 10; offset++){
-                    world[i][1][j + offset] = 2;
+                    world[i][1][j + offset] = WALL_COLOUR;
                 }
             }
 
         }
     }
 
-    /* create sample player */
-    createPlayer(0, 52.0, 1.0, 52.0, 0.0);
 
 
+}
+
+void OuterWalls(){
+    int i;
+
+    /* blue box shows xy bounds of the world */
+    for(i=0; i<WORLDX-1; i++) {
+        world[i][1][0] = WALL_COLOUR;
+        world[i][1][WORLDZ-1] = WALL_COLOUR;
+    }
+    for(i=0; i<WORLDZ-1; i++) {
+        world[0][1][i] = WALL_COLOUR;
+        world[WORLDX-1][1][i] = WALL_COLOUR;
+    }
+}
+
+
+void ChangeWalls(){
+    int i, j, rnd, offset;
+
+    //Randomize walls running along the x axis
+    for(i=10; i<WORLDX-2; i+=10){
+        for(j=10; j<WORLDZ-2; j+=10){
+
+            int toggleColour;
+
+            rnd = rand() % 2;
+
+
+            if(rnd == 0){
+                toggleColour = WALL_COLOUR;
+            }
+            else{
+                toggleColour = 0;
+            }
+
+
+            for(offset = 0; offset < 10; offset++){
+                world[i + offset][1][j] = toggleColour;
+            }
+
+            //Make sure an edge block didn't get removed
+            if(i == 0 || i + 10 >= WORLDX - 1){
+                world[i][1][j] = WALL_COLOUR;
+            }
+
+        }
+    }
+
+    //Randomize walls running along the y axis
+    for(i=10; i<WORLDX-2; i+=10){
+        for(j=10; j<WORLDZ-2; j+=10){
+
+            int toggleColour;
+
+            rnd = rand() % 2;
+
+            if(rnd == 0){
+                toggleColour = WALL_COLOUR;
+            }
+            else{
+                toggleColour = 0;
+            }
+
+
+            for(offset = 0; offset < 10; offset++){
+                world[i][1][j + offset] = toggleColour;
+            }
+
+            //Make sure an edge block didn't get removed
+            if(i == 0 || i + 10 >= WORLDX - 1){
+                world[i][1][j] = WALL_COLOUR;
+            }
+
+        }
+    }
+
+
+    OuterWalls();
 }
