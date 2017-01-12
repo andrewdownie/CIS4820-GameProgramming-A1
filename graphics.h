@@ -3,6 +3,13 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
+#elif _WIN32
+#include <windows.h>
+#include <GL/glut.h>
+#else
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 #endif
 
         /* world size and storage array */
@@ -12,4 +19,3 @@
 GLubyte  world[WORLDX][WORLDY][WORLDZ];
 
 #define MAX_DISPLAY_LIST 500000
-

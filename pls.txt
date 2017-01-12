@@ -1,0 +1,374 @@
+./makefile: line 3: INCLUDES: command not found
+./makefile: line 5: a1:: command not found
+./makefile: line 6: INCLUDES: command not found
+In file included from a1.c:14:0:
+graphics.h:12:1: error: unknown type name ‘GLubyte’
+ GLubyte  world[WORLDX][WORLDY][WORLDZ];
+ ^
+a1.c:23:1: warning: parameter names (without types) in function declaration [enabled by default]
+ extern void setLightPosition(GLfloat, GLfloat, GLfloat);
+ ^
+a1.c:24:1: error: unknown type name ‘GLfloat’
+ extern GLfloat* getLightPosition();
+ ^
+a1.c: In function ‘draw2D’:
+a1.c:107:7: error: unknown type name ‘GLfloat’
+       GLfloat green[] = {0.0, 0.5, 0.0, 0.5};
+       ^
+a1.c:108:7: warning: passing argument 1 of ‘set2Dcolour’ from incompatible pointer type [enabled by default]
+       set2Dcolour(green);
+       ^
+a1.c:52:14: note: expected ‘float *’ but argument is of type ‘int *’
+ extern void  set2Dcolour(float []);
+              ^
+a1.c:112:7: error: unknown type name ‘GLfloat’
+       GLfloat black[] = {0.0, 0.0, 0.0, 0.5};
+       ^
+a1.c:113:7: warning: passing argument 1 of ‘set2Dcolour’ from incompatible pointer type [enabled by default]
+       set2Dcolour(black);
+       ^
+a1.c:52:14: note: expected ‘float *’ but argument is of type ‘int *’
+ extern void  set2Dcolour(float []);
+              ^
+a1.c: In function ‘mouse’:
+a1.c:199:18: error: ‘GLUT_LEFT_BUTTON’ undeclared (first use in this function)
+    if (button == GLUT_LEFT_BUTTON)
+                  ^
+a1.c:199:18: note: each undeclared identifier is reported only once for each function it appears in
+a1.c:201:23: error: ‘GLUT_MIDDLE_BUTTON’ undeclared (first use in this function)
+    else if (button == GLUT_MIDDLE_BUTTON)
+                       ^
+a1.c:206:17: error: ‘GLUT_UP’ undeclared (first use in this function)
+    if (state == GLUT_UP)
+                 ^
+In file included from graphics.c:11:0:
+graphics.h:12:1: error: unknown type name ‘GLubyte’
+ GLubyte  world[WORLDX][WORLDY][WORLDZ];
+ ^
+graphics.c:30:1: error: unknown type name ‘GLubyte’
+ GLubyte  Image[64][64][4];
+ ^
+graphics.c:31:1: error: unknown type name ‘GLuint’
+ GLuint   textureID[1];
+ ^
+graphics.c:45:1: error: unknown type name ‘GLfloat’
+ GLfloat lightPosition[] = {0.0, 49.0, 0.0, 0.0};
+ ^
+graphics.c:47:1: error: unknown type name ‘GLfloat’
+ GLfloat viewpointLight[] = {-50.0, -50.0, -50.0, 1.0};
+ ^
+graphics.c:213:23: error: unknown type name ‘GLfloat’
+ void setLightPosition(GLfloat x, GLfloat y, GLfloat z) {
+                       ^
+graphics.c:213:34: error: unknown type name ‘GLfloat’
+ void setLightPosition(GLfloat x, GLfloat y, GLfloat z) {
+                                  ^
+graphics.c:213:45: error: unknown type name ‘GLfloat’
+ void setLightPosition(GLfloat x, GLfloat y, GLfloat z) {
+                                             ^
+graphics.c:221:1: error: unknown type name ‘GLfloat’
+ GLfloat* getLightPosition() {
+ ^
+graphics.c: In function ‘init’:
+graphics.c:278:4: error: unknown type name ‘GLfloat’
+    GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1.0 };
+    ^
+graphics.c:279:4: error: unknown type name ‘GLfloat’
+    GLfloat light_diffuse[] = { 0.8, 0.8, 0.8, 1.0 };
+    ^
+graphics.c:280:4: error: unknown type name ‘GLfloat’
+    GLfloat light_specular[] = { 0.5, 0.5, 0.5, 1.0 };
+    ^
+graphics.c:281:4: error: unknown type name ‘GLfloat’
+    GLfloat light_full_off[] = {0.0, 0.0, 0.0, 1.0};
+    ^
+graphics.c:282:4: error: unknown type name ‘GLfloat’
+    GLfloat light_full_on[] = {1.0, 1.0, 1.0, 1.0};
+    ^
+graphics.c:284:18: error: ‘GL_LIGHT_MODEL_LOCAL_VIEWER’ undeclared (first use in this function)
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+                  ^
+graphics.c:284:18: note: each undeclared identifier is reported only once for each function it appears in
+graphics.c:284:47: error: ‘GL_TRUE’ undeclared (first use in this function)
+    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+                                               ^
+graphics.c:290:18: error: ‘GL_LIGHT0’ undeclared (first use in this function)
+       glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+                  ^
+graphics.c:290:29: error: ‘GL_AMBIENT’ undeclared (first use in this function)
+       glLightfv (GL_LIGHT0, GL_AMBIENT, light_ambient);
+                             ^
+graphics.c:291:29: error: ‘GL_DIFFUSE’ undeclared (first use in this function)
+       glLightfv (GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+                             ^
+graphics.c:293:29: error: ‘GL_SPECULAR’ undeclared (first use in this function)
+       glLightfv (GL_LIGHT0, GL_SPECULAR, light_full_off);
+                             ^
+graphics.c:299:26: error: ‘GL_POSITION’ undeclared (first use in this function)
+    glLightfv (GL_LIGHT0, GL_POSITION, lightPosition);
+                          ^
+graphics.c:302:15: error: ‘GL_LIGHT1’ undeclared (first use in this function)
+    glLightfv (GL_LIGHT1, GL_POSITION, viewpointLight);
+               ^
+graphics.c:306:24: error: ‘GL_LINEAR_ATTENUATION’ undeclared (first use in this function)
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.5);
+                        ^
+graphics.c:309:14: error: ‘GL_LIGHTING’ undeclared (first use in this function)
+    glEnable (GL_LIGHTING);
+              ^
+graphics.c:313:13: error: ‘GL_DEPTH_TEST’ undeclared (first use in this function)
+    glEnable(GL_DEPTH_TEST);
+             ^
+graphics.c: In function ‘drawCube’:
+graphics.c:319:1: error: unknown type name ‘GLfloat’
+ GLfloat blue[]  = {0.0, 0.0, 1.0, 1.0};
+ ^
+graphics.c:320:1: error: unknown type name ‘GLfloat’
+ GLfloat red[]   = {1.0, 0.0, 0.0, 1.0};
+ ^
+graphics.c:321:1: error: unknown type name ‘GLfloat’
+ GLfloat green[] = {0.0, 1.0, 0.0, 1.0};
+ ^
+graphics.c:322:1: error: unknown type name ‘GLfloat’
+ GLfloat yellow[]   = {1.0, 1.0, 0.0, 1.0};
+ ^
+graphics.c:323:1: error: unknown type name ‘GLfloat’
+ GLfloat purple[]   = {1.0, 0.0, 1.0, 1.0};
+ ^
+graphics.c:324:1: error: unknown type name ‘GLfloat’
+ GLfloat orange[]   = {1.0, 0.64, 0.0, 1.0};
+ ^
+graphics.c:325:1: error: unknown type name ‘GLfloat’
+ GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
+ ^
+graphics.c:326:1: error: unknown type name ‘GLfloat’
+ GLfloat black[] = {0.0, 0.0, 0.0, 1.0};
+ ^
+graphics.c:328:1: error: unknown type name ‘GLfloat’
+ GLfloat dblue[]  = {0.0, 0.0, 0.5, 1.0};
+ ^
+graphics.c:329:1: error: unknown type name ‘GLfloat’
+ GLfloat dred[]   = {0.5, 0.0, 0.0, 1.0};
+ ^
+graphics.c:330:1: error: unknown type name ‘GLfloat’
+ GLfloat dgreen[] = {0.0, 0.5, 0.0, 1.0};
+ ^
+graphics.c:331:1: error: unknown type name ‘GLfloat’
+ GLfloat dyellow[]   = {0.5, 0.5, 0.0, 1.0};
+ ^
+graphics.c:332:1: error: unknown type name ‘GLfloat’
+ GLfloat dpurple[]   = {0.5, 0.0, 0.5, 1.0};
+ ^
+graphics.c:333:1: error: unknown type name ‘GLfloat’
+ GLfloat dorange[]   = {0.5, 0.32, 0.0, 1.0};
+ ^
+graphics.c:337:17: error: ‘GL_FRONT’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
+                 ^
+graphics.c:337:27: error: ‘GL_SPECULAR’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
+                           ^
+graphics.c:340:30: error: ‘GL_AMBIENT’ undeclared (first use in this function)
+       glMaterialfv(GL_FRONT, GL_AMBIENT, dgreen);
+                              ^
+graphics.c:341:30: error: ‘GL_DIFFUSE’ undeclared (first use in this function)
+       glMaterialfv(GL_FRONT, GL_DIFFUSE, green);
+                              ^
+graphics.c:352:30: error: ‘GL_AMBIENT_AND_DIFFUSE’ undeclared (first use in this function)
+       glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, black);
+                              ^
+graphics.c: In function ‘display’:
+graphics.c:383:1: error: unknown type name ‘GLfloat’
+ GLfloat skyblue[]  = {0.52, 0.74, 0.84, 1.0};
+ ^
+graphics.c:384:1: error: unknown type name ‘GLfloat’
+ GLfloat black[] = {0.0, 0.0, 0.0, 1.0};
+ ^
+graphics.c:385:1: error: unknown type name ‘GLfloat’
+ GLfloat red[] = {1.0, 0.0, 0.0, 1.0};
+ ^
+graphics.c:386:1: error: unknown type name ‘GLfloat’
+ GLfloat gray[] = {0.3, 0.3, 0.3, 1.0};
+ ^
+graphics.c:387:1: error: unknown type name ‘GLfloat’
+ GLfloat white[] = {1.0, 1.0, 1.0, 1.0};
+ ^
+graphics.c:391:13: error: ‘GL_COLOR_BUFFER_BIT’ undeclared (first use in this function)
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+             ^
+graphics.c:391:35: error: ‘GL_DEPTH_BUFFER_BIT’ undeclared (first use in this function)
+    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                                   ^
+graphics.c:409:15: error: ‘GL_LIGHT1’ undeclared (first use in this function)
+    glLightfv (GL_LIGHT1, GL_POSITION, viewpointLight);
+               ^
+graphics.c:409:26: error: ‘GL_POSITION’ undeclared (first use in this function)
+    glLightfv (GL_LIGHT1, GL_POSITION, viewpointLight);
+                          ^
+graphics.c:413:20: error: ‘GL_SMOOTH’ undeclared (first use in this function)
+       glShadeModel(GL_SMOOTH);
+                    ^
+graphics.c:415:20: error: ‘GL_FLAT’ undeclared (first use in this function)
+       glShadeModel(GL_FLAT);
+                    ^
+graphics.c:419:21: error: ‘GL_FRONT_AND_BACK’ undeclared (first use in this function)
+       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                     ^
+graphics.c:419:40: error: ‘GL_LINE’ undeclared (first use in this function)
+       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                                        ^
+graphics.c:421:40: error: ‘GL_FILL’ undeclared (first use in this function)
+       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                                        ^
+graphics.c:424:16: error: ‘GL_FRONT’ undeclared (first use in this function)
+    glMaterialf(GL_FRONT, GL_SHININESS, 90.0);
+                ^
+graphics.c:424:26: error: ‘GL_SHININESS’ undeclared (first use in this function)
+    glMaterialf(GL_FRONT, GL_SHININESS, 90.0);
+                          ^
+graphics.c:432:27: error: ‘GL_AMBIENT’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_AMBIENT, black);
+                           ^
+graphics.c:433:27: error: ‘GL_DIFFUSE’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, black);
+                           ^
+graphics.c:434:36: error: ‘GL_EMISSION’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, skyblue);
+                                    ^
+graphics.c:457:33: error: ‘GL_AMBIENT_AND_DIFFUSE’ undeclared (first use in this function)
+          glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
+                                 ^
+graphics.c:514:18: error: ‘GL_PROJECTION’ undeclared (first use in this function)
+    glMatrixMode (GL_PROJECTION);
+                  ^
+graphics.c:518:18: error: ‘GL_MODELVIEW’ undeclared (first use in this function)
+    glMatrixMode (GL_MODELVIEW);
+                  ^
+graphics.c:522:13: error: ‘GL_BLEND’ undeclared (first use in this function)
+    glEnable(GL_BLEND);
+             ^
+graphics.c:523:16: error: ‘GL_SRC_ALPHA’ undeclared (first use in this function)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                ^
+graphics.c:523:30: error: ‘GL_ONE_MINUS_SRC_ALPHA’ undeclared (first use in this function)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                              ^
+graphics.c: In function ‘reshape’:
+graphics.c:546:23: error: ‘GLsizei’ undeclared (first use in this function)
+    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
+                       ^
+graphics.c:546:32: error: expected ‘)’ before ‘w’
+    glViewport (0, 0, (GLsizei) w, (GLsizei) h);
+                                ^
+graphics.c:547:18: error: ‘GL_PROJECTION’ undeclared (first use in this function)
+    glMatrixMode (GL_PROJECTION);
+                  ^
+graphics.c:550:26: error: ‘GLfloat’ undeclared (first use in this function)
+    gluPerspective(45.0, (GLfloat)w/(GLfloat)h, 0.1, skySize);
+                          ^
+graphics.c:550:34: error: expected ‘)’ before ‘w’
+    gluPerspective(45.0, (GLfloat)w/(GLfloat)h, 0.1, skySize);
+                                  ^
+graphics.c:551:18: error: ‘GL_MODELVIEW’ undeclared (first use in this function)
+    glMatrixMode (GL_MODELVIEW);
+                  ^
+graphics.c: In function ‘loadTexture’:
+graphics.c:695:18: error: ‘GL_UNPACK_ALIGNMENT’ undeclared (first use in this function)
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+                  ^
+graphics.c:697:18: error: ‘GL_TEXTURE_2D’ undeclared (first use in this function)
+    glBindTexture(GL_TEXTURE_2D, textureID[0]);
+                  ^
+graphics.c:698:35: error: ‘GL_TEXTURE_WRAP_S’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                                   ^
+graphics.c:698:54: error: ‘GL_REPEAT’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                                                      ^
+graphics.c:699:35: error: ‘GL_TEXTURE_WRAP_T’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                                   ^
+graphics.c:700:35: error: ‘GL_TEXTURE_MAG_FILTER’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                                   ^
+graphics.c:700:58: error: ‘GL_LINEAR’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                                                          ^
+graphics.c:701:35: error: ‘GL_TEXTURE_MIN_FILTER’ undeclared (first use in this function)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                                   ^
+graphics.c:702:35: error: ‘GL_RGBA’ undeclared (first use in this function)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA,
+                                   ^
+graphics.c:703:7: error: ‘GL_UNSIGNED_BYTE’ undeclared (first use in this function)
+       GL_UNSIGNED_BYTE, Image);
+       ^
+graphics.c:704:14: error: ‘GL_TEXTURE_ENV’ undeclared (first use in this function)
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+              ^
+graphics.c:704:30: error: ‘GL_TEXTURE_ENV_MODE’ undeclared (first use in this function)
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                              ^
+graphics.c:704:51: error: ‘GL_MODULATE’ undeclared (first use in this function)
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+                                                   ^
+graphics.c:705:13: error: ‘GL_TEXTURE_GEN_S’ undeclared (first use in this function)
+    glEnable(GL_TEXTURE_GEN_S);
+             ^
+graphics.c:706:13: error: ‘GL_TEXTURE_GEN_T’ undeclared (first use in this function)
+    glEnable(GL_TEXTURE_GEN_T);
+             ^
+graphics.c: In function ‘graphicsInit’:
+graphics.c:734:25: error: ‘GLUT_DOUBLE’ undeclared (first use in this function)
+    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+                         ^
+graphics.c:734:39: error: ‘GLUT_RGBA’ undeclared (first use in this function)
+    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+                                       ^
+graphics.c:734:51: error: ‘GLUT_DEPTH’ undeclared (first use in this function)
+    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+                                                   ^
+graphics.c: In function ‘draw2Dline’:
+graphics.c:797:12: error: ‘GL_LINES’ undeclared (first use in this function)
+    glBegin(GL_LINES);
+            ^
+graphics.c: In function ‘draw2Dbox’:
+graphics.c:805:12: error: ‘GL_QUADS’ undeclared (first use in this function)
+    glBegin(GL_QUADS);
+            ^
+graphics.c: In function ‘draw2Dtriangle’:
+graphics.c:814:12: error: ‘GL_TRIANGLES’ undeclared (first use in this function)
+    glBegin(GL_TRIANGLES);
+            ^
+graphics.c: In function ‘set2Dcolour’:
+graphics.c:822:17: error: ‘GL_FRONT’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_EMISSION, colourv);
+                 ^
+graphics.c:822:27: error: ‘GL_EMISSION’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_EMISSION, colourv);
+                           ^
+graphics.c:823:27: error: ‘GL_AMBIENT_AND_DIFFUSE’ undeclared (first use in this function)
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colourv);
+                           ^
+In file included from visible.c:11:0:
+graphics.h:12:1: error: unknown type name ‘GLubyte’
+ GLubyte  world[WORLDX][WORLDY][WORLDZ];
+ ^
+visible.c:16:1: warning: parameter names (without types) in function declaration [enabled by default]
+ extern void setLightPosition(GLfloat, GLfloat, GLfloat);
+ ^
+visible.c:17:1: error: unknown type name ‘GLfloat’
+ extern GLfloat* getLightPosition();
+ ^
+visible.c: In function ‘ExtractFrustum’:
+visible.c:139:17: error: ‘GL_PROJECTION_MATRIX’ undeclared (first use in this function)
+    glGetFloatv( GL_PROJECTION_MATRIX, proj );
+                 ^
+visible.c:139:17: note: each undeclared identifier is reported only once for each function it appears in
+visible.c:142:17: error: ‘GL_MODELVIEW_MATRIX’ undeclared (first use in this function)
+    glGetFloatv( GL_MODELVIEW_MATRIX, modl );
+                 ^
+visible.c: In function ‘buildDisplayList’:
+visible.c:416:20: error: ‘GLUT_ELAPSED_TIME’ undeclared (first use in this function)
+       time=glutGet(GLUT_ELAPSED_TIME);
+                    ^
