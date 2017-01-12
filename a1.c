@@ -10,8 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #include "graphics.h"
+
+/*Extension forward declarations*/
+void BuildWorld();
 
 	/* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
@@ -63,7 +67,7 @@ extern int space;
 	/* flag indicates the program is a client when set = 1 */
 extern int netClient;
 	/* flag indicates the program is a server when set = 1 */
-extern int netServer; 
+extern int netServer;
 	/* size of the window in pixels */
 extern int screenWidth, screenHeight;
 	/* flag indicates if map is to be printed */
@@ -101,20 +105,20 @@ void collisionResponse() {
 	/*	set2Dcolour(float []); 				*/
 	/* colour must be set before other functions are called	*/
 void draw2D() {
+    GLfloat green[] = {0.0, 0.5, 0.0, 0.5};
+    GLfloat black[] = {0.0, 0.0, 0.0, 0.5};
 
    if (testWorld) {
-		/* draw some sample 2d shapes */
-      GLfloat green[] = {0.0, 0.5, 0.0, 0.5};
-      set2Dcolour(green);
-      draw2Dline(0, 0, 500, 500, 15);
-      draw2Dtriangle(0, 0, 200, 200, 0, 200);
+        /* draw some sample 2d shapes */
+        set2Dcolour(green);
+    //    draw2Dline(0, 0, 500, 500, 15);
+    //    draw2Dtriangle(0, 0, 200, 200, 0, 200);
 
-      GLfloat black[] = {0.0, 0.0, 0.0, 0.5};
-      set2Dcolour(black);
-      draw2Dbox(500, 380, 524, 388);
-   } else {
+        set2Dcolour(black);
+        draw2Dbox(500, 380, 524, 388);
+    } else {
 
-	/* your code goes here */
+        //DRAW GUI HERE ////////////////////////////////////////////////////////
 
    }
 
@@ -151,7 +155,7 @@ float *la;
 	/* move mob 0 in the x axis */
       if (increasingmob0 == 1)
          mob0x += 0.2;
-      else 
+      else
          mob0x -= 0.2;
       if (mob0x > 50) increasingmob0 = 0;
       if (mob0x < 30) increasingmob0 = 1;
@@ -183,7 +187,7 @@ float *la;
 
    } else {
 
-	/* your code goes here */
+       ////////// GAME LOGIC HERE //////////////////////////////////////////////
 
    }
 }
@@ -193,7 +197,7 @@ float *la;
 	/* -button indicates which button was pressed or released */
 	/* -state indicates a button down or button up event */
 	/* -x,y are the screen coordinates when the mouse is pressed or */
-	/*  released */ 
+	/*  released */
 void mouse(int button, int state, int x, int y) {
 
    if (button == GLUT_LEFT_BUTTON)
@@ -218,6 +222,9 @@ int main(int argc, char** argv)
 int i, j, k;
 	/* initialize the graphics system */
    graphicsInit(&argc, argv);
+
+   /* initialize random */
+   srand((unsigned) time(NULL));
 
 	/* the first part of this if statement builds a sample */
 	/* world which will be used for testing */
@@ -266,7 +273,8 @@ int i, j, k;
 
    } else {
 
-	/* your code to build the world goes here */
+
+       BuildWorld();
 
    }
 
@@ -274,6 +282,76 @@ int i, j, k;
 	/* starts the graphics processing loop */
 	/* code after this will not run until the program exits */
    glutMainLoop();
-   return 0; 
+   return 0;
 }
 
+/////
+///// Extension functions
+/////
+
+
+void BuildWorld(){
+    int rnd;
+    int offset;
+    int i, j, k;
+
+    /* initialize world to empty */
+    for(i=0; i<WORLDX; i++)
+        for(j=0; j<WORLDY; j++)
+            for(k=0; k<WORLDZ; k++)
+                world[i][j][k] = 0;
+
+    /* build a red platform */
+    for(i=0; i<WORLDX; i++) {
+        for(j=0; j<WORLDZ; j++) {
+            world[i][0][j] = 3;
+        }
+    }
+
+    /* blue box shows xy bounds of the world */
+    for(i=0; i<WORLDX-1; i++) {
+        world[i][1][0] = 2;
+        world[i][1][WORLDZ-1] = 2;
+    }
+    for(i=0; i<WORLDZ-1; i++) {
+        world[0][1][i] = 2;
+        world[WORLDX-1][1][i] = 2;
+    }
+
+    //Randomize walls running along the x axis
+    for(i=0; i<WORLDX-2; i+=10){
+        for(j=0; j<WORLDZ-2; j+=10){
+            rnd = rand() % 2;
+
+            world[i][1][j] = 2;
+
+            if(rnd == 0){
+                for(offset = 1; offset < 10; offset++){
+                    world[i + offset][1][j] = 2;
+                }
+            }
+
+        }
+    }
+
+    //Randomize walls running along the y axis
+    for(i=0; i<WORLDX-2; i+=10){
+        for(j=0; j<WORLDZ-2; j+=10){
+            rnd = rand() % 2;
+
+            world[i][1][j] = 2;
+
+            if(rnd == 0){
+                for(offset = 1; offset < 10; offset++){
+                    world[i][1][j + offset] = 2;
+                }
+            }
+
+        }
+    }
+
+    /* create sample player */
+    createPlayer(0, 52.0, 1.0, 52.0, 0.0);
+
+
+}
