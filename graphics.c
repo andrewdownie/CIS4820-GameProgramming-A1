@@ -31,11 +31,11 @@ GLubyte  Image[64][64][4];
 GLuint   textureID[1];
 
 	/* viewpoint coordinates */
-float vpx = -50.0, vpy = -50.0, vpz = -50.0;
+float vpx = -2.0, vpy = -2.0, vpz = -2.0;
 float oldvpx, oldvpy, oldvpz;
 
 	/* mouse direction coordiates */
-float mvx = 0.0, mvy = 45.0, mvz = 0.0;
+float mvx = 0.0, mvy = 0.0, mvz = 0.0;
 
 	/* stores current mouse position value */
 float oldx, oldy;
@@ -305,7 +305,7 @@ void init (void)
    glLightfv (GL_LIGHT1, GL_SPECULAR, light_specular);
    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.5);
 
-   
+
    glEnable (GL_LIGHTING);
    glEnable (GL_LIGHT0);
    glEnable (GL_LIGHT1);
@@ -340,7 +340,7 @@ GLfloat dorange[]   = {0.5, 0.32, 0.0, 1.0};
       glMaterialfv(GL_FRONT, GL_AMBIENT, dgreen);
       glMaterialfv(GL_FRONT, GL_DIFFUSE, green);
    }
-   else if (world[i][j][k] == 2) { 
+   else if (world[i][j][k] == 2) {
       glMaterialfv(GL_FRONT, GL_AMBIENT, dblue);
       glMaterialfv(GL_FRONT, GL_DIFFUSE, blue);
    }
@@ -358,7 +358,7 @@ GLfloat dorange[]   = {0.5, 0.32, 0.0, 1.0};
       glMaterialfv(GL_FRONT, GL_AMBIENT, dpurple);
       glMaterialfv(GL_FRONT, GL_DIFFUSE, purple);
    }
-   else if (world[i][j][k] == 7) { 
+   else if (world[i][j][k] == 7) {
       glMaterialfv(GL_FRONT, GL_AMBIENT, dorange);
       glMaterialfv(GL_FRONT, GL_DIFFUSE, orange);
    }
@@ -369,7 +369,7 @@ GLfloat dorange[]   = {0.5, 0.32, 0.0, 1.0};
 
    glPushMatrix ();
 	/* offset cubes by 0.5 so the centre of the */
-	/* cube falls in the centre of the world array */ 
+	/* cube falls in the centre of the world array */
    glTranslatef(i + 0.5, j + 0.5, k + 0.5);
    glutSolidCube(1.0);
    glPopMatrix ();
@@ -390,7 +390,7 @@ int i, j, k;
    buildDisplayList();
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	/* position viewpoint based on mouse rotation and keyboard 
+	/* position viewpoint based on mouse rotation and keyboard
 	   translation */
    glLoadIdentity();
    glRotatef(mvx, 1.0, 0.0, 0.0);
@@ -417,7 +417,7 @@ int i, j, k;
 	/* draw polygons as either solid or outlines */
    if (lineDrawing == 1)
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-   else 
+   else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	/* give all objects the same shininess value and specular colour */
@@ -680,7 +680,7 @@ int  red, green, blue;
    if ((fp = fopen("image.txt", "r")) == 0) {
       printf("Error, failed to find the file named image.txt.\n");
       exit(0);
-   } 
+   }
 
    for(i=0; i<64; i++) {
       for(j=0; j<64; j++) {
@@ -822,4 +822,3 @@ void  set2Dcolour(float colourv[]) {
    glMaterialfv(GL_FRONT, GL_EMISSION, colourv);
    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colourv);
 }
-

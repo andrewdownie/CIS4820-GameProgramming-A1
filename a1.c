@@ -16,12 +16,6 @@
 
 
 ///
-/// Globals (For debugging)
-///
-int zeros, ones;
-int sampleCount;
-
-///
 /// Wall Settings
 ///
 #define WALL_COLOUR 2
@@ -29,6 +23,11 @@ int sampleCount;
 #define CHANGE_WALLS_TIME 1500
 #define WALL_TOGGLE_PERCENT_CHANCE 10
 #define WALL_SPAWN_PERCENT_CHANCE 40
+
+///
+/// Player Settings
+///
+#define GRAVITY_RATE 1.0f
 
 /*Extension forward declarations*/
 void BuildWorld();
@@ -110,8 +109,41 @@ extern void tree(float, float, float, float, float, float, int);
 	/* note that the world coordinates returned from getViewPosition()
 	   will be the negative value of the array indices */
 void collisionResponse() {
+    float x, y, z;
+    float oldX, oldY, oldZ;
+    int intX, intY, intZ;
 
-	/* your collision code goes here */
+    getViewPosition(&x, &y, &z);
+
+    y = y + GRAVITY_RATE;//TODO: does this need to be timed
+
+    //Prevent player from falling through the floor
+    if(y > -1){
+        y = -1;
+    }
+
+    intX = (int)x * -1;
+    intY = (int)y * -1;
+    intZ = (int)z * -1;
+
+
+
+    //Get whether the cube the player is on is walkable
+    int notWalkable = world[intX][intY][intZ] != 0;
+
+    if(notWalkable){
+        //if the player is in a square they shouldn't be:
+        //set their position to their old position
+        getOldViewPosition(&oldX, &oldY, &oldZ);
+        x = oldX;
+        y = oldY;
+        z = oldZ;
+    }
+
+
+
+    setViewPosition(x, y, z);
+
 
 }
 
@@ -294,11 +326,6 @@ int i, j, k;
       createPlayer(0, 52.0, 27.0, 52.0, 0.0);
 
    } else {
-       ///
-       /// Set globals to zero (for testing)
-       ///
-       zeros = 0;
-       ones = 0;
 
        BuildWorld();
 
