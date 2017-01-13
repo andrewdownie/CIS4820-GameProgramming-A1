@@ -14,12 +14,28 @@
 
 #include "graphics.h"
 
+
+///
+/// Globals (For debugging)
+///
+int zeros, ones;
+int sampleCount;
+
+///
+/// Wall Settings
+///
 #define WALL_COLOUR 2
+#define AUTO_CHANGE_WALLS 1
+#define CHANGE_WALLS_TIME 1500
+#define WALL_TOGGLE_PERCENT_CHANCE 10
+#define WALL_SPAWN_PERCENT_CHANCE 40
 
 /*Extension forward declarations*/
 void BuildWorld();
 void ChangeWalls();
 void OuterWalls();
+
+int PercentChance(int chance);
 
 	/* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
@@ -192,7 +208,7 @@ float *la;
    } else {
 
 
-      ChangeWalls();
+      //ChangeWalls();
        ////////// GAME LOGIC HERE //////////////////////////////////////////////
 
    }
@@ -278,9 +294,19 @@ int i, j, k;
       createPlayer(0, 52.0, 27.0, 52.0, 0.0);
 
    } else {
-
+       ///
+       /// Set globals to zero (for testing)
+       ///
+       zeros = 0;
+       ones = 0;
 
        BuildWorld();
+
+       if(AUTO_CHANGE_WALLS == 1){
+           glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+       }
+
+
 
        /* create sample player */
        createPlayer(0, 52.0, 1.0, 52.0, 0.0);
@@ -295,14 +321,28 @@ int i, j, k;
    return 0;
 }
 
+
+
 /////
 ///// Extension functions
 /////
 
+//Generates a random boolean in the form of 0 and 1.
+//Parm "percent": is the chance out of 100 that this function will return 1.
+int PercentChance(int percent){
+    int rnd;
+    rnd = rand() % 100 + 1;
+
+    if(percent > rnd){
+        return 1;
+    }
+    return 0;
+}
+
 
 void BuildWorld(){
     int offset;
-    int i, j, k, rnd;
+    int i, j, k;
 
     /* initialize world to empty */
     for(i=0; i<WORLDX; i++)
@@ -322,11 +362,10 @@ void BuildWorld(){
     //Randomize walls running along the x axis
     for(i=0; i<WORLDX-2; i+=10){
         for(j=0; j<WORLDZ-2; j+=10){
-            rnd = rand() % 2;
 
             world[i][1][j] = 2;
 
-            if(rnd == 0){
+            if(PercentChance(WALL_SPAWN_PERCENT_CHANCE)){
                 for(offset = 1; offset < 10; offset++){
                     world[i + offset][1][j] = WALL_COLOUR;
                 }
@@ -338,11 +377,10 @@ void BuildWorld(){
     //Randomize walls running along the y axis
     for(i=0; i<WORLDX-2; i+=10){
         for(j=0; j<WORLDZ-2; j+=10){
-            rnd = rand() % 2;
 
             world[i][1][j] = 2;
 
-            if(rnd == 0){
+            if(PercentChance(WALL_SPAWN_PERCENT_CHANCE)){
                 for(offset = 1; offset < 10; offset++){
                     world[i][1][j + offset] = WALL_COLOUR;
                 }
@@ -370,19 +408,25 @@ void OuterWalls(){
 }
 
 
-void ChangeWalls(){
-    int i, j, rnd, offset;
+void ChangeWalls(int temp){
+    int i, j, offset;
+
+    if(AUTO_CHANGE_WALLS == 1){
+        glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+    }
+
 
     //Randomize walls running along the x axis
-    for(i=10; i<WORLDX-2; i+=10){
-        for(j=10; j<WORLDZ-2; j+=10){
+    for(i=10; i<WORLDX-1; i+=10){
+        for(j=10; j<WORLDZ-1; j+=10){
 
             int toggleColour;
 
-            rnd = rand() % 2;
+            if(PercentChance(WALL_TOGGLE_PERCENT_CHANCE) == 0){
+                continue;
+            }
 
-
-            if(rnd == 0){
+            if(world[i + 1][1][j] == 0){
                 toggleColour = WALL_COLOUR;
             }
             else{
@@ -390,27 +434,25 @@ void ChangeWalls(){
             }
 
 
-            for(offset = 0; offset < 10; offset++){
+            for(offset = 1; offset < 10; offset++){
                 world[i + offset][1][j] = toggleColour;
             }
 
-            //Make sure an edge block didn't get removed
-            if(i == 0 || i + 10 >= WORLDX - 1){
-                world[i][1][j] = WALL_COLOUR;
-            }
 
         }
     }
 
     //Randomize walls running along the y axis
-    for(i=10; i<WORLDX-2; i+=10){
-        for(j=10; j<WORLDZ-2; j+=10){
+    for(i=10; i<WORLDX-1; i+=10){
+        for(j=10; j<WORLDZ-1; j+=10){
 
             int toggleColour;
 
-            rnd = rand() % 2;
+            if(PercentChance(WALL_TOGGLE_PERCENT_CHANCE) == 0){
+                continue;
+            }
 
-            if(rnd == 0){
+            if(world[i][1][j + 1] == 0){
                 toggleColour = WALL_COLOUR;
             }
             else{
@@ -418,18 +460,16 @@ void ChangeWalls(){
             }
 
 
-            for(offset = 0; offset < 10; offset++){
+            for(offset = 1; offset < 10; offset++){
                 world[i][1][j + offset] = toggleColour;
             }
 
-            //Make sure an edge block didn't get removed
-            if(i == 0 || i + 10 >= WORLDX - 1){
-                world[i][1][j] = WALL_COLOUR;
-            }
 
         }
     }
 
-
     OuterWalls();
+
+
+
 }
