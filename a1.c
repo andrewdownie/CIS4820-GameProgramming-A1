@@ -18,7 +18,7 @@
 ///
 /// Wall Settings
 ///
-#define WALL_COLOUR 2
+#define WALL_COLOUR 1
 #define AUTO_CHANGE_WALLS 1
 #define CHANGE_WALLS_TIME 1500
 #define WALL_TOGGLE_PERCENT_CHANCE 10
@@ -27,14 +27,38 @@
 ///
 /// Player Settings
 ///
-#define GRAVITY_RATE 1.0f
+#define GRAVITY_RATE 9.8f
+#define GRAVITY_ENABLED 1
 
-/*Extension forward declarations*/
+
+///
+/// Collision Settings
+///
+#define NOT_WALKABLE 0
+#define EMPTY_PIECE 0
+#define WALKABLE 1
+
+///
+/// Delta Time
+///
+int lastCollisionTime;
+int timeSinceLastUpdate;
+
+
+///
+///Extension forward declarations
+///
 void BuildWorld();
 void ChangeWalls();
 void OuterWalls();
 
+///
+/// Utility forward delcarations
+///
 int PercentChance(int chance);
+int WalkablePiece(int x, int y, int z);
+float Clamp(float value, float minVal, float maxVal);
+float DeltaGravity(int timeSinceLastCollision);
 
 	/* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
@@ -109,42 +133,115 @@ extern void tree(float, float, float, float, float, float, int);
 	/* note that the world coordinates returned from getViewPosition()
 	   will be the negative value of the array indices */
 void collisionResponse() {
-    float x, y, z;
-    float oldX, oldY, oldZ;
-    int intX, intY, intZ;
+    //Viewport position values
+    int oldIndexX, oldIndexY, oldIndexZ;
+    int indexX, indexY, indexZ;
+    int firstFloorBelowPlayer;
 
+    float oldX, oldY, oldZ;
+    float x, y, z;
+    float deltaGravity;
+
+
+    int previousPiece;
+    int currentPiece;
+
+
+    getOldViewPosition(&oldX, &oldY, &oldZ);
     getViewPosition(&x, &y, &z);
 
-    y = y + GRAVITY_RATE;//TODO: does this need to be timed
+    ///
+    /// PLAYER MOVEMENT: Collision with walls and floors
+    ///
+    oldIndexX = (int)oldX * -1;
+    oldIndexY = (int)oldY * -1;
+    oldIndexZ = (int)oldZ * -1;
 
-    //Prevent player from falling through the floor
-    if(y > -1){
-        y = -1;
+    indexX = (int)x * -1;
+    indexY = (int)y * -1;
+    indexZ = (int)z * -1;
+
+    previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
+    currentPiece = WalkablePiece(indexX, indexY, indexZ);
+
+
+    //Handle: camera moving down into blocks below
+    if(currentPiece == NOT_WALKABLE){
+
+        if(oldIndexY > indexY){
+            y = (indexY + 1) * -1;
+            indexY = (int)y * -1;
+            currentPiece = WalkablePiece(indexX, indexY, indexZ);
+        }
+
     }
 
-    intX = (int)x * -1;
-    intY = (int)y * -1;
-    intZ = (int)z * -1;
+    //Handle: camera moving sideways into walls
+    if(currentPiece == NOT_WALKABLE){
 
+        if(indexX != oldIndexX || indexZ != oldIndexZ){
+            x = oldX;
+            z = oldZ;
+            //TODO: if moved to its own fucntion, set the viewport position here
+        }
 
-
-    //Get whether the cube the player is on is walkable
-    int notWalkable = world[intX][intY][intZ] != 0;
-
-    if(notWalkable){
-        //if the player is in a square they shouldn't be:
-        //set their position to their old position
-        getOldViewPosition(&oldX, &oldY, &oldZ);
-        x = oldX;
-        y = oldY;
-        z = oldZ;
     }
+
+    ///
+    /// GRAVITY: collision with walls and floors
+    ///
+    oldIndexX = indexX;
+    oldIndexY = indexY;
+    oldIndexZ = indexZ;
+    oldX = x;
+    oldY = y;
+    oldZ = z;
+
+
+    //Add gravity
+    if(GRAVITY_ENABLED){
+        deltaGravity = DeltaGravity(lastCollisionTime);
+    }
+    else{
+        deltaGravity = 0;
+    }
+
+    y = y + deltaGravity;
+    indexY = (int)y * -1;
+
+    previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
+    currentPiece = WalkablePiece(indexX, indexY, indexZ);
+
+    for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
+        if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
+            firstFloorBelowPlayer = firstFloorBelowPlayer + 10;
+
+            break;
+        }
+    }
+
+
+
+    if(indexY - deltaGravity < firstFloorBelowPlayer){
+        y = firstFloorBelowPlayer;
+        printf("%f\n", y);
+    }
+
+    //Handle gravity pushing the player into the block below
+    /*if(currentPiece == NOT_WALKABLE){
+
+        if(oldIndexY > indexY){
+            y = (indexY + 1) * -1;
+            indexY = (int)y * -1;
+            currentPiece = WalkablePiece(indexX, indexY, indexZ);
+        }
+
+    }*/
 
 
 
     setViewPosition(x, y, z);
-
-
+    lastCollisionTime = glutGet(GLUT_ELAPSED_TIME);
 }
 
 
@@ -237,12 +334,20 @@ float *la;
       if (mob1ry > 360.0) mob1ry -= 360.0;
     /* end testworld animation */
 
-   } else {
+    } else {//////////////////////////// LOGIC GOES HERE
+        int currentTime  = glutGet(GLUT_ELAPSED_TIME);
+        int deltaTime = currentTime - timeSinceLastUpdate;
+
+        //printf("Delta time is: %d\n", deltaTime);
+
+        /*float x, y, z;
+
+        getViewPosition(&x, &y, &z);
+        y = y + 1 * deltaTime / 1000;
+        setViewPosition(x, y, z);*/
 
 
-      //ChangeWalls();
-       ////////// GAME LOGIC HERE //////////////////////////////////////////////
-
+        timeSinceLastUpdate = glutGet(GLUT_ELAPSED_TIME);
    }
 }
 
@@ -276,9 +381,6 @@ int main(int argc, char** argv)
 int i, j, k;
 	/* initialize the graphics system */
    graphicsInit(&argc, argv);
-
-   /* initialize random */
-   srand((unsigned) time(NULL));
 
 	/* the first part of this if statement builds a sample */
 	/* world which will be used for testing */
@@ -327,6 +429,17 @@ int i, j, k;
 
    } else {
 
+       ///
+       /// initialize random
+       ///
+       srand((unsigned) time(NULL));
+
+       ///
+       /// Set lastUpdateTime to zero
+       ///
+       timeSinceLastUpdate = 0;
+       lastCollisionTime = 0;
+
        BuildWorld();
 
        if(AUTO_CHANGE_WALLS == 1){
@@ -353,19 +466,6 @@ int i, j, k;
 /////
 ///// Extension functions
 /////
-
-//Generates a random boolean in the form of 0 and 1.
-//Parm "percent": is the chance out of 100 that this function will return 1.
-int PercentChance(int percent){
-    int rnd;
-    rnd = rand() % 100 + 1;
-
-    if(percent > rnd){
-        return 1;
-    }
-    return 0;
-}
-
 
 void BuildWorld(){
     int offset;
@@ -499,4 +599,41 @@ void ChangeWalls(int temp){
 
 
 
+}
+
+
+/////
+///// Untility Functions
+/////
+//Generates a random boolean in the form of 0 and 1.
+//Parm "percent": is the chance out of 100 that this function will return 1.
+int PercentChance(int percent){
+    int rnd;
+    rnd = rand() % 100 + 1;
+
+    if(percent > rnd){
+        return 1;
+    }
+    return 0;
+}
+
+int WalkablePiece(int x, int y, int z){
+    return world[x][y][z] == EMPTY_PIECE;
+}
+
+float Clamp(float value, float minVal, float maxVal){
+    if(value < minVal){
+        return minVal;
+    }
+    else if(value > maxVal){
+        return maxVal;
+    }
+
+    return value;
+}
+
+float DeltaGravity(int lastCollisionTime){
+    int currentTime = glutGet(GLUT_ELAPSED_TIME);
+    int deltaTime = currentTime - lastCollisionTime;
+    return GRAVITY_RATE * deltaTime / 1000;
 }
