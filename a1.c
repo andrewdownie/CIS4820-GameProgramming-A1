@@ -58,8 +58,13 @@ void OuterWalls();
 ///
 int PercentChance(int chance);
 int WalkablePiece(int x, int y, int z);
+int WalkablePiece_I3(Int3 xyz);
+
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
+
+
+
 
 	/* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
@@ -135,12 +140,10 @@ extern void tree(float, float, float, float, float, float, int);
 	   will be the negative value of the array indices */
 void collisionResponse() {
     //Viewport position values
-    int oldIndexX, oldIndexY, oldIndexZ;
-    int indexX, indexY, indexZ;
-    int firstFloorBelowPlayer;
+    Vector3 curPos, oldPos;
+    Int3 curIndex, oldIndex;
 
-    float oldX, oldY, oldZ;
-    float x, y, z;
+    int floorLevel;
     float deltaGravity;
 
 
@@ -148,32 +151,33 @@ void collisionResponse() {
     int currentPiece;
 
 
-    getOldViewPosition(&oldX, &oldY, &oldZ);
-    getViewPosition(&x, &y, &z);
+    getOldViewPosition(&oldPos.x, &oldPos.y, &oldPos.z);
+    getViewPosition(&curPos.x, &curPos.y, &curPos.z);
+
+    oldIndex.x = (int)oldPos.x * -1;
+    oldIndex.y = (int)oldPos.y * -1;
+    oldIndex.z = (int)oldPos.z * -1;
+
+    curIndex.x = (int)curPos.x * -1;
+    curIndex.y = (int)curPos.y * -1;
+    curIndex.z = (int)curPos.z * -1;
+
+    previousPiece = WalkablePiece(oldIndex.x, oldIndex.y, oldIndex.z);
+    currentPiece = WalkablePiece(curIndex.x, curIndex.y, curIndex.z);
+
 
     ///
     /// PLAYER MOVEMENT: Collision with walls and floors
     ///
-    oldIndexX = (int)oldX * -1;
-    oldIndexY = (int)oldY * -1;
-    oldIndexZ = (int)oldZ * -1;
-
-    indexX = (int)x * -1;
-    indexY = (int)y * -1;
-    indexZ = (int)z * -1;
-
-    previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
-    currentPiece = WalkablePiece(indexX, indexY, indexZ);
-
-
     //Handle: camera moving down into blocks below
     if(currentPiece == NOT_WALKABLE){
 
-        if(oldIndexY > indexY){
-            y = (indexY + 1) * -1;
-            indexY = (int)y * -1;
-            currentPiece = WalkablePiece(indexX, indexY, indexZ);
+        if(oldIndex.y > curIndex.y){
+            curPos.y = (curIndex.y + 1) * -1;
+            curIndex.y = (int)curPos.y * -1;
+            currentPiece = WalkablePiece(curIndex.x, curIndex.y, curIndex.z);
         }
+
     }
 
 
@@ -181,68 +185,58 @@ void collisionResponse() {
     //Handle: camera moving sideways into walls
     if(currentPiece == NOT_WALKABLE){
 
-        if(indexX != oldIndexX || indexZ != oldIndexZ){
-            x = oldX;
-            z = oldZ;
+        if(curIndex.x != oldIndex.x || curIndex.z != oldIndex.z){
+            curPos.x = oldPos.x;
+            curPos.z = oldPos.z;
 
-            //ADDED BELOW W/O testing///////////////////////////////////////////
-            if(indexY > oldIndexY + 1){//Double height walls go here??
-                printf("Gone up wall\n");
-            }
             //TODO: if moved to its own fucntion, set the viewport position here
         }
 
     }
 
-    //Handle: limiting the player to climbing walls of height one
-    //if(y > oldY + 1){
-    //    printf("you have climbed a wall of greater than one height, stop that.\n");
-    //}
-
     ///
     /// GRAVITY: collision with walls and floors
     ///
-    oldIndexX = indexX;
-    oldIndexY = indexY;
-    oldIndexZ = indexZ;
-    oldX = x;
-    oldY = y;
-    oldZ = z;
+    oldIndex.x = curIndex.x;
+    oldIndex.y = curIndex.y;
+    oldIndex.z = curIndex.z;
+    oldPos.x = curPos.x;
+    oldPos.y = curPos.y;
+    oldPos.z = curPos.z;
 
 
 
-    for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
+    for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
 
-        if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
+        if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
             break;
         }
     }
-
-    firstFloorBelowPlayer = firstFloorBelowPlayer + PLAYER_HEIGHT;
-
+    floorLevel = floorLevel + PLAYER_HEIGHT;
 
 
     if(GRAVITY_ENABLED){
+
         deltaGravity = DeltaGravity(lastCollisionTime);
-        if(firstFloorBelowPlayer >= (y * -1) - deltaGravity){
-            y = firstFloorBelowPlayer * -1;
-            printf("\t%f\n\n", y);
+        if(floorLevel >= (curPos.y * -1) - deltaGravity){
+            curPos.y = floorLevel * -1;
         }
         else{
-            y = y + deltaGravity;
+            curPos.y = curPos.y + deltaGravity;
         }
+
     }
 
-    indexY = (int)y * -1;
-    oldIndexY = (int)oldY * -1;
+    ///
+    /// Prevent climbing walls higher than one block tall
+    ///
+    curIndex.y = (int)curPos.y * -1;
+    oldIndex.y = (int)oldPos.y * -1;
 
-
-    ///TRY TO DO DOUBLE HEIGHT WALLS HERE???????????????????????????????????????
-    if(indexY > oldIndexY + 1){
-        printf("Went up more than one block\n");
-        y = oldY;
-        x = oldX;
-        z = oldZ;
+    if(curIndex.y > oldIndex.y + 1){
+        curPos.x = oldPos.x;
+        curPos.y = oldPos.y;
+        curPos.z = curPos.z;
     }
 
 
@@ -250,7 +244,7 @@ void collisionResponse() {
 
 
 
-    setViewPosition(x, y, z);
+    setViewPosition(curPos.x, curPos.y, curPos.z);
     lastCollisionTime = glutGet(GLUT_ELAPSED_TIME);
 }
 
@@ -636,6 +630,11 @@ int PercentChance(int percent){
 int WalkablePiece(int x, int y, int z){
     return world[x][y][z] == EMPTY_PIECE;
 }
+
+int WalkablePiece_I3(Int3 xyz){
+    return world[xyz.x][xyz.y][xyz.z] == EMPTY_PIECE;
+}
+
 
 float Clamp(float value, float minVal, float maxVal){
     if(value < minVal){

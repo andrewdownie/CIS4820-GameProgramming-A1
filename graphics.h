@@ -19,3 +19,15 @@
 GLubyte  world[WORLDX][WORLDY][WORLDZ];
 
 #define MAX_DISPLAY_LIST 500000
+
+typedef struct V3 {
+   float x;
+   float y;
+   float z;
+} Vector3;
+
+typedef struct I3 {
+    int x;
+    int y;
+    int z;
+} Int3;
