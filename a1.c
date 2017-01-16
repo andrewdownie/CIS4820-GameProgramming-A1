@@ -14,6 +14,7 @@
 
 #include "graphics.h"
 
+#define FLOOR_COLOR 3
 
 ///
 /// Wall Settings
@@ -62,6 +63,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
 ///
 ///Extension forward declarations
 ///
+void SetupNodesWalls();
 void ChangeWalls();
 void BuildWorld();
 void OuterWalls();
@@ -158,8 +160,7 @@ void collisionResponse() {
     Vector3 curPos, oldPos;
     Int3 curIndex, oldIndex;
 
-    int floorLevel;
-    float deltaGravity;
+
 
     int previousPiece;
     int currentPiece;
@@ -220,25 +221,6 @@ void collisionResponse() {
     oldPos.y = curPos.y;
     oldPos.z = curPos.z;
 
-
-    if(GRAVITY_ENABLED){
-        for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
-
-            if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
-                break;
-            }
-        }
-        floorLevel = floorLevel + PLAYER_HEIGHT;
-
-        deltaGravity = DeltaGravity(lastCollisionTime);
-        if(floorLevel >= (curPos.y * -1) - deltaGravity){
-            curPos.y = floorLevel * -1;
-        }
-        else{
-            curPos.y = curPos.y + deltaGravity;
-        }
-
-    }
 
 
     ///
@@ -351,17 +333,41 @@ void update() {
         if (mob1ry > 360.0) mob1ry -= 360.0;
         /* end testworld animation */
 
+
+
+
     } else {//////////////////////////// LOGIC GOES HERE
-        int currentTime  = glutGet(GLUT_ELAPSED_TIME);
-        int deltaTime = currentTime - timeSinceLastUpdate;
+        int floorLevel;
+        float deltaGravity = DeltaGravity(timeSinceLastUpdate);
 
-        //printf("Delta time is: %d\n", deltaTime);
+        Vector3 curPos;
+        Int3 curIndex;
 
-        /*float x, y, z;
+        getViewPosition(&curPos.x, &curPos.y, &curPos.z);
+        curIndex.x = (int)curPos.x * -1;
+        curIndex.y = (int)curPos.y * -1;
+        curIndex.z = (int)curPos.z * -1;
 
-        getViewPosition(&x, &y, &z);
-        y = y + 1 * deltaTime / 1000;
-        setViewPosition(x, y, z);*/
+
+        if(GRAVITY_ENABLED){
+            for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
+
+                if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
+                    break;
+                }
+            }
+            floorLevel = floorLevel + PLAYER_HEIGHT;
+
+            deltaGravity = DeltaGravity(lastCollisionTime);
+            if(floorLevel >= (curPos.y * -1) - deltaGravity){
+                curPos.y = floorLevel * -1;
+            }
+            else{
+                curPos.y = curPos.y + deltaGravity;
+            }
+
+        }
+        setViewPosition(curPos.x, curPos.y, curPos.z);
 
 
         timeSinceLastUpdate = glutGet(GLUT_ELAPSED_TIME);
@@ -487,7 +493,7 @@ int main(int argc, char** argv)
 
 
 /////
-///// Extension functions
+///// World Building Functions -------------------------------------------------
 /////
 
 void BuildWorld(){
@@ -495,52 +501,59 @@ void BuildWorld(){
     int i, j, k;
 
     /* initialize world to empty */
-    for(i=0; i<WORLDX; i++)
-    for(j=0; j<WORLDY; j++)
-    for(k=0; k<WORLDZ; k++)
-    world[i][j][k] = 0;
+    for(i=0; i<WORLDX; i++){
+        for(j=0; j<WORLDY; j++){
+            for(k=0; k<WORLDZ; k++){
+                world[i][j][k] = 0;
+            }
+        }
+    }
 
-    /* build a red platform */
+
+    /* build the floor*/
     for(i=0; i<WORLDX; i++) {
         for(j=0; j<WORLDZ; j++) {
-            world[i][0][j] = 3;
+            world[i][0][j] = FLOOR_COLOR;
         }
     }
 
     OuterWalls();
+    SetupNodesWalls();
 
-    //Randomize walls running along the x axis
-    for(i=0; i<WORLDX-2; i+=10){
-        for(j=0; j<WORLDZ-2; j+=10){
 
-            world[i][1][j] = 2;
 
-            if(PercentChance(WALL_SPAWN_PERCENT_CHANCE)){
-                for(offset = 1; offset < 10; offset++){
-                    world[i + offset][1][j] = WALL_COLOUR;
-                }
-            }
 
-        }
-    }
+}
 
-    //Randomize walls running along the y axis
-    for(i=0; i<WORLDX-2; i+=10){
-        for(j=0; j<WORLDZ-2; j+=10){
+void SetupNodesWalls(){
+    int x, y;
 
-            world[i][1][j] = 2;
-
-            if(PercentChance(WALL_SPAWN_PERCENT_CHANCE)){
-                for(offset = 1; offset < 10; offset++){
-                    world[i][1][j + offset] = WALL_COLOUR;
-                }
-            }
+    ///
+    /// Horizontal Walls
+    ///
+    for(x = 0; x < WALL_COUNT_X; x++){
+        for(y = 0; y < WALL_COUNT_Y - 1; y++){
 
         }
     }
 
+    ///
+    /// Vertical Walls
+    ///
+    for(x = 0; x < WALL_COUNT_X - 1; x++){
+        for(y = 0; y < WALL_COUNT_Y; y++){
 
+        }
+    }
 
+    ///
+    /// Nodes
+    ///
+    for(x = 0; x < WALL_COUNT_X; x++){
+        for(y = 0; y < WALL_COUNT_Y; y++){
+
+        }
+    }
 }
 
 void OuterWalls(){
@@ -629,8 +642,9 @@ void ChangeWalls(int temp){
 
 
 /////
-///// Untility Functions -------------------------------------------------------
+///// Utility Functions --------------------------------------------------------
 /////
+
 //Generates a random boolean in the form of 0 and 1.
 //Parameter "percent": is the chance out of 100 that this function will return 1.
 int PercentChance(int percent){
