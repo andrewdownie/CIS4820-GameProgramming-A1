@@ -29,10 +29,11 @@
 ///
 #define GRAVITY_RATE 9.8f
 #define GRAVITY_ENABLED 1
+#define PLAYER_HEIGHT 2
 
 
 ///
-/// Collision Settings
+/// Collision Constants
 ///
 #define NOT_WALKABLE 0
 #define EMPTY_PIECE 0
@@ -173,8 +174,9 @@ void collisionResponse() {
             indexY = (int)y * -1;
             currentPiece = WalkablePiece(indexX, indexY, indexZ);
         }
-
     }
+
+
 
     //Handle: camera moving sideways into walls
     if(currentPiece == NOT_WALKABLE){
@@ -182,10 +184,20 @@ void collisionResponse() {
         if(indexX != oldIndexX || indexZ != oldIndexZ){
             x = oldX;
             z = oldZ;
+
+            //ADDED BELOW W/O testing///////////////////////////////////////////
+            if(indexY > oldIndexY + 1){//Double height walls go here??
+                printf("Gone up wall\n");
+            }
             //TODO: if moved to its own fucntion, set the viewport position here
         }
 
     }
+
+    //Handle: limiting the player to climbing walls of height one
+    //if(y > oldY + 1){
+    //    printf("you have climbed a wall of greater than one height, stop that.\n");
+    //}
 
     ///
     /// GRAVITY: collision with walls and floors
@@ -198,27 +210,20 @@ void collisionResponse() {
     oldZ = z;
 
 
-    //Add gravity
+
+    for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
+
+        if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
+            break;
+        }
+    }
+
+    firstFloorBelowPlayer = firstFloorBelowPlayer + PLAYER_HEIGHT;
+
+
+
     if(GRAVITY_ENABLED){
         deltaGravity = DeltaGravity(lastCollisionTime);
-
-
-        //indexY = (int)y * -1;
-
-        //previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
-        //currentPiece = WalkablePiece(indexX, indexY, indexZ);
-        printf("Index y: %d\n", indexY);
-
-        for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
-
-            if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
-                break;
-            }
-        }
-        firstFloorBelowPlayer++;
-        printf("\tfloorBelow: %d\n", firstFloorBelowPlayer);
-
-
         if(firstFloorBelowPlayer >= (y * -1) - deltaGravity){
             y = firstFloorBelowPlayer * -1;
             printf("\t%f\n\n", y);
@@ -226,6 +231,18 @@ void collisionResponse() {
         else{
             y = y + deltaGravity;
         }
+    }
+
+    indexY = (int)y * -1;
+    oldIndexY = (int)oldY * -1;
+
+
+    ///TRY TO DO DOUBLE HEIGHT WALLS HERE???????????????????????????????????????
+    if(indexY > oldIndexY + 1){
+        printf("Went up more than one block\n");
+        y = oldY;
+        x = oldX;
+        z = oldZ;
     }
 
 
