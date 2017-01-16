@@ -1,4 +1,3 @@
-
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
@@ -55,6 +54,7 @@ typedef struct _Wall{
     float percentClosed;
     WallState state;
     Direction movementDirection;
+    int x, y;
 } Wall;
 
 typedef struct _Node{

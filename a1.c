@@ -48,8 +48,7 @@
 ///
 /// Delta Time
 ///
-int timeSinceLastUpdate;
-int lastCollisionTime;
+int lastGravityTime;
 
 ///
 /// Nodes and Walls
@@ -160,7 +159,8 @@ void collisionResponse() {
     Vector3 curPos, oldPos;
     Int3 curIndex, oldIndex;
 
-
+    int floorLevel;
+    float deltaGravity = DeltaGravity(lastGravityTime);
 
     int previousPiece;
     int currentPiece;
@@ -221,7 +221,29 @@ void collisionResponse() {
     oldPos.y = curPos.y;
     oldPos.z = curPos.z;
 
+    getViewPosition(&curPos.x, &curPos.y, &curPos.z);
+    curIndex.x = (int)curPos.x * -1;
+    curIndex.y = (int)curPos.y * -1;
+    curIndex.z = (int)curPos.z * -1;
 
+
+    if(GRAVITY_ENABLED){
+        for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
+
+            if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
+                break;
+            }
+        }
+        floorLevel = floorLevel + PLAYER_HEIGHT;
+
+        if(floorLevel >= (curPos.y * -1) - deltaGravity){
+            curPos.y = floorLevel * -1;
+        }
+        else{
+            curPos.y = curPos.y + deltaGravity;
+        }
+
+    }
 
     ///
     /// Prevent climbing walls higher than one block tall
@@ -240,7 +262,7 @@ void collisionResponse() {
     /// Finish
     ///
     setViewPosition(curPos.x, curPos.y, curPos.z);
-    lastCollisionTime = glutGet(GLUT_ELAPSED_TIME);
+    lastGravityTime = glutGet(GLUT_ELAPSED_TIME);
 }
 
 
@@ -337,40 +359,11 @@ void update() {
 
 
     } else {//////////////////////////// LOGIC GOES HERE
-        int floorLevel;
-        float deltaGravity = DeltaGravity(timeSinceLastUpdate);
-
-        Vector3 curPos;
-        Int3 curIndex;
-
-        getViewPosition(&curPos.x, &curPos.y, &curPos.z);
-        curIndex.x = (int)curPos.x * -1;
-        curIndex.y = (int)curPos.y * -1;
-        curIndex.z = (int)curPos.z * -1;
 
 
-        if(GRAVITY_ENABLED){
-            for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
-
-                if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
-                    break;
-                }
-            }
-            floorLevel = floorLevel + PLAYER_HEIGHT;
-
-            deltaGravity = DeltaGravity(lastCollisionTime);
-            if(floorLevel >= (curPos.y * -1) - deltaGravity){
-                curPos.y = floorLevel * -1;
-            }
-            else{
-                curPos.y = curPos.y + deltaGravity;
-            }
-
-        }
-        setViewPosition(curPos.x, curPos.y, curPos.z);
+        collisionResponse();
 
 
-        timeSinceLastUpdate = glutGet(GLUT_ELAPSED_TIME);
     }
 }
 
@@ -460,19 +453,19 @@ int main(int argc, char** argv)
         ///
         /// Set lastUpdateTime to zero
         ///
-        timeSinceLastUpdate = 0;
-        lastCollisionTime = 0;
+        lastGravityTime = 0;
 
         BuildWorld();
-        world[0][2][0] = 1;
-        world[0][3][0] = 1;
+        world[0][2][1] = 5;
+        world[0][3][1] = 5;
 
-        world[1][2][0] = 1;
-        world[2][2][0] = 1;
-        world[3][2][0] = 1;
+        world[1][2][1] = 5;
+        world[2][2][1] = 5;
+        world[3][2][1] = 5;
+        world[3][1][2] = 5;
 
         if(AUTO_CHANGE_WALLS == 1){
-            glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+        //    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
         }
 
 
@@ -529,29 +522,46 @@ void SetupNodesWalls(){
     int x, y;
 
     ///
-    /// Horizontal Walls
+    /// Clear Horizontal Walls
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
         for(y = 0; y < WALL_COUNT_Y - 1; y++){
-
+            horizontalWalls[x][y].movementDirection = none;
+            horizontalWalls[x][y].percentClosed = 0;
+            horizontalWalls[x][y].state = open;
+            horizontalWalls[x][y].x = WALL_LENGTH;
+            horizontalWalls[x][y].y = x * WALL_LENGTH - 1;//TODO: is this right?
         }
     }
 
     ///
-    /// Vertical Walls
+    /// Clear Vertical Walls
     ///
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(y = 0; y < WALL_COUNT_Y; y++){
-
+            verticalWalls[x][y].movementDirection = none;
+            verticalWalls[x][y].percentClosed = 0;
+            verticalWalls[x][y].state = open;
+            verticalWalls[x][y].x = y * WALL_LENGTH - 1;
+            verticalWalls[x][y].y = WALL_LENGTH;
         }
     }
 
     ///
-    /// Nodes
+    /// Clear Nodes
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
         for(y = 0; y < WALL_COUNT_Y; y++){
+            nodes[x][y].north = &verticalWalls[x][y];
+            nodes[x][y].west = &horizontalWalls[x][y];
 
+            if(x > 0){
+                nodes[x][y].west = &horizontalWalls[x + 1][y];
+            }
+
+            if(y > 0){
+                nodes[x][y].south = &horizontalWalls[x][y + 1];
+            }
         }
     }
 }
@@ -658,11 +668,27 @@ int PercentChance(int percent){
 }
 
 int WalkablePiece(int x, int y, int z){
-    return world[x][y][z] == EMPTY_PIECE;
+    int count = 0, height;
+
+    for(height = 0; height < PLAYER_HEIGHT; height++){
+        if(world[x][y + height][z] != EMPTY_PIECE){
+            count++;
+        }
+    }
+
+    return count == 0;
 }
 
 int WalkablePiece_I3(Int3 xyz){
-    return world[xyz.x][xyz.y][xyz.z] == EMPTY_PIECE;
+    int count = 0, height;
+
+    for(height = 0; height < PLAYER_HEIGHT; height++){
+        if(world[xyz.x][xyz.y + height][xyz.z] != EMPTY_PIECE){
+            count++;
+        }
+    }
+
+    return count == 0;
 }
 
 
