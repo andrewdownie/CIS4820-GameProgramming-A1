@@ -201,42 +201,35 @@ void collisionResponse() {
     //Add gravity
     if(GRAVITY_ENABLED){
         deltaGravity = DeltaGravity(lastCollisionTime);
-    }
-    else{
-        deltaGravity = 0;
-    }
 
-    y = y + deltaGravity;
-    indexY = (int)y * -1;
 
-    previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
-    currentPiece = WalkablePiece(indexX, indexY, indexZ);
+        //indexY = (int)y * -1;
 
-    for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
-        if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
-            firstFloorBelowPlayer = firstFloorBelowPlayer + 10;
+        //previousPiece = WalkablePiece(oldIndexX, oldIndexY, oldIndexZ);
+        //currentPiece = WalkablePiece(indexX, indexY, indexZ);
+        printf("Index y: %d\n", indexY);
 
-            break;
+        for(firstFloorBelowPlayer = indexY; firstFloorBelowPlayer > 0; firstFloorBelowPlayer--){
+
+            if(WalkablePiece(indexX, firstFloorBelowPlayer, indexZ) == NOT_WALKABLE){
+                break;
+            }
+        }
+        firstFloorBelowPlayer++;
+        printf("\tfloorBelow: %d\n", firstFloorBelowPlayer);
+
+
+        if(firstFloorBelowPlayer >= (y * -1) - deltaGravity){
+            y = firstFloorBelowPlayer * -1;
+            printf("\t%f\n\n", y);
+        }
+        else{
+            y = y + deltaGravity;
         }
     }
 
 
 
-    if(indexY - deltaGravity < firstFloorBelowPlayer){
-        y = firstFloorBelowPlayer;
-        printf("%f\n", y);
-    }
-
-    //Handle gravity pushing the player into the block below
-    /*if(currentPiece == NOT_WALKABLE){
-
-        if(oldIndexY > indexY){
-            y = (indexY + 1) * -1;
-            indexY = (int)y * -1;
-            currentPiece = WalkablePiece(indexX, indexY, indexZ);
-        }
-
-    }*/
 
 
 
@@ -441,6 +434,12 @@ int i, j, k;
        lastCollisionTime = 0;
 
        BuildWorld();
+       world[0][2][0] = 1;
+       world[0][3][0] = 1;
+
+       world[1][2][0] = 1;
+       world[2][2][0] = 1;
+       world[3][2][0] = 1;
 
        if(AUTO_CHANGE_WALLS == 1){
            glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
