@@ -53,7 +53,6 @@ int lastGravityTime;
 ///
 /// Nodes and Walls
 ///
-Node nodes[WALL_COUNT_X][WALL_COUNT_Y];
 Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Y];
 Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
 
@@ -62,7 +61,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
 ///
 ///Extension forward declarations
 ///
-void SetupNodesWalls();
+void SetupWalls();
 void ChangeWalls();
 void BuildWorld();
 void OuterWalls();
@@ -73,6 +72,7 @@ void OuterWalls();
 int WalkablePiece(int x, int y, int z);
 int WalkablePiece_I3(Int3 xyz);
 int PercentChance(int chance);
+unsigned int RandomRange(int min, int max);
 
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
@@ -221,11 +221,6 @@ void collisionResponse() {
     oldPos.y = curPos.y;
     oldPos.z = curPos.z;
 
-    getViewPosition(&curPos.x, &curPos.y, &curPos.z);
-    curIndex.x = (int)curPos.x * -1;
-    curIndex.y = (int)curPos.y * -1;
-    curIndex.z = (int)curPos.z * -1;
-
 
     if(GRAVITY_ENABLED){
         for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
@@ -252,6 +247,7 @@ void collisionResponse() {
     oldIndex.y = (int)oldPos.y * -1;
 
     if(curIndex.y > oldIndex.y + 1){
+        printf("You climbed a wall of height two... stop that\n");
         curPos.x = oldPos.x;
         curPos.y = oldPos.y;
         curPos.z = curPos.z;
@@ -456,6 +452,9 @@ int main(int argc, char** argv)
         lastGravityTime = 0;
 
         BuildWorld();
+
+
+        ///Setup some cubes to climb up for testing
         world[0][2][1] = 5;
         world[0][3][1] = 5;
 
@@ -463,6 +462,9 @@ int main(int argc, char** argv)
         world[2][2][1] = 5;
         world[3][2][1] = 5;
         world[3][1][2] = 5;
+        //world[2][3][3] = 5;
+
+
 
         if(AUTO_CHANGE_WALLS == 1){
         //    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
@@ -474,7 +476,23 @@ int main(int argc, char** argv)
         createPlayer(0, 52.0, 1.0, 52.0, 0.0);
 
 
+        SetupWalls();
+
+        /// Pick a wall
+
+        int rand = PercentChance(50);
+        int x, y;
+
+
+        if(rand){
+
+        }
+        else{
+
+        }
     }
+
+
 
 
     /* starts the graphics processing loop */
@@ -511,14 +529,14 @@ void BuildWorld(){
     }
 
     OuterWalls();
-    SetupNodesWalls();
+    SetupWalls();
 
 
 
 
 }
 
-void SetupNodesWalls(){
+void SetupWalls(){
     int x, y;
 
     ///
@@ -547,23 +565,6 @@ void SetupNodesWalls(){
         }
     }
 
-    ///
-    /// Clear Nodes
-    ///
-    for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Y; y++){
-            nodes[x][y].north = &verticalWalls[x][y];
-            nodes[x][y].west = &horizontalWalls[x][y];
-
-            if(x > 0){
-                nodes[x][y].west = &horizontalWalls[x + 1][y];
-            }
-
-            if(y > 0){
-                nodes[x][y].south = &horizontalWalls[x][y + 1];
-            }
-        }
-    }
 }
 
 void OuterWalls(){
@@ -665,6 +666,12 @@ int PercentChance(int percent){
         return 1;
     }
     return 0;
+}
+
+unsigned int RandomRange(int min, int max){
+    double scaled = (double)rand()/RAND_MAX;
+
+    return (max - min +1)*scaled + min;
 }
 
 int WalkablePiece(int x, int y, int z){
