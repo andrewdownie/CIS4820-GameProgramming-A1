@@ -20,11 +20,11 @@
 /// Wall Settings
 ///
 #define WALL_TOGGLE_PERCENT_CHANCE 10
-#define WALL_SPAWN_PERCENT_CHANCE 40
 #define CHANGE_WALLS_TIME 1500
 #define AUTO_CHANGE_WALLS 1
 #define WALL_COLOUR 1
 #define WALL_HEIGHT 2
+#define MAX_WALLS 20
 
 #define WALL_COUNT_X 6
 #define WALL_COUNT_Y 6
@@ -63,7 +63,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
 ///
 void SetupWalls();
 void ChangeWalls();
-void BuildWorld();
+void ClearWorld();
 void OuterWalls();
 
 ///
@@ -71,7 +71,7 @@ void OuterWalls();
 ///
 int WalkablePiece(int x, int y, int z);
 int WalkablePiece_I3(Int3 xyz);
-int PercentChance(int chance);
+int PercentChance(float chance);
 unsigned int RandomRange(int min, int max);
 
 float Clamp(float value, float minVal, float maxVal);
@@ -247,7 +247,6 @@ void collisionResponse() {
     oldIndex.y = (int)oldPos.y * -1;
 
     if(curIndex.y > oldIndex.y + 1){
-        printf("You climbed a wall of height two... stop that\n");
         curPos.x = oldPos.x;
         curPos.y = oldPos.y;
         curPos.z = curPos.z;
@@ -451,7 +450,9 @@ int main(int argc, char** argv)
         ///
         lastGravityTime = 0;
 
-        BuildWorld();
+        ClearWorld();
+        OuterWalls();
+        SetupWalls();
 
 
         ///Setup some cubes to climb up for testing
@@ -462,12 +463,14 @@ int main(int argc, char** argv)
         world[2][2][1] = 5;
         world[3][2][1] = 5;
         world[3][1][2] = 5;
-        //world[2][3][3] = 5;
+        world[2][3][3] = 5;
+
+        world[2][3][2] = 5;
 
 
 
         if(AUTO_CHANGE_WALLS == 1){
-        //    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+            //    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
         }
 
 
@@ -476,20 +479,8 @@ int main(int argc, char** argv)
         createPlayer(0, 52.0, 1.0, 52.0, 0.0);
 
 
-        SetupWalls();
-
-        /// Pick a wall
-
-        int rand = PercentChance(50);
-        int x, y;
 
 
-        if(rand){
-
-        }
-        else{
-
-        }
     }
 
 
@@ -507,7 +498,7 @@ int main(int argc, char** argv)
 ///// World Building Functions -------------------------------------------------
 /////
 
-void BuildWorld(){
+void ClearWorld(){
     int offset;
     int i, j, k;
 
@@ -528,16 +519,17 @@ void BuildWorld(){
         }
     }
 
-    OuterWalls();
-    SetupWalls();
-
-
 
 
 }
 
 void SetupWalls(){
+    double vertWallChance, horWallChance;
+    double maxVertWalls, maxHorWalls;
+    int vertWalls, horWalls;
+    int rnd;
     int x, y;
+
 
     ///
     /// Clear Horizontal Walls
@@ -547,8 +539,6 @@ void SetupWalls(){
             horizontalWalls[x][y].movementDirection = none;
             horizontalWalls[x][y].percentClosed = 0;
             horizontalWalls[x][y].state = open;
-            horizontalWalls[x][y].x = WALL_LENGTH;
-            horizontalWalls[x][y].y = x * WALL_LENGTH - 1;//TODO: is this right?
         }
     }
 
@@ -560,11 +550,71 @@ void SetupWalls(){
             verticalWalls[x][y].movementDirection = none;
             verticalWalls[x][y].percentClosed = 0;
             verticalWalls[x][y].state = open;
-            verticalWalls[x][y].x = y * WALL_LENGTH - 1;
-            verticalWalls[x][y].y = WALL_LENGTH;
         }
     }
 
+    maxVertWalls = (WALL_COUNT_X - 1) * WALL_COUNT_Y;
+    maxHorWalls = WALL_COUNT_X * (WALL_COUNT_Y - 1);
+
+    vertWallChance = ((MAX_WALLS / 2) / maxVertWalls) * 100;
+    horWallChance = ((MAX_WALLS / 2) / maxHorWalls) * 100;
+    printf("MEOW: %f\n", maxVertWalls);
+    printf("WALL CHANCE: %f\n", vertWallChance);
+
+    vertWalls = 0;
+    horWalls = 0;
+
+
+    ///
+    /// Place Horizontal walls
+    ///
+    for(x = 0; x < WALL_COUNT_X; x++){
+        for(y = 0; y < WALL_COUNT_Y - 1; y++){
+
+            rnd = PercentChance(vertWallChance);
+            if(rnd){
+                horWalls++;
+                horizontalWalls[x][y].percentClosed = 100;
+                horizontalWalls[x][y].state = closed;
+
+                if(horWalls >= MAX_WALLS/2){
+                    x = WALL_COUNT_X;
+                    y = WALL_COUNT_Y;
+                }
+
+            }
+
+        }
+    }
+
+
+    ///
+    /// Place Vertical Walls
+    ///
+    for(x = 0; x < WALL_COUNT_X; x++){
+        for(y = 0; y < WALL_COUNT_Y - 1; y++){
+
+            rnd = PercentChance(horWallChance);
+            if(rnd){
+                    printf("8");
+
+                vertWalls++;
+                verticalWalls[x][y].percentClosed = 100;
+                verticalWalls[x][y].state = closed;
+
+                if(vertWalls >= MAX_WALLS/2){
+                    x = WALL_COUNT_X;
+                    y = WALL_COUNT_Y;
+                }
+            }
+            else{
+                    printf("-");
+            }
+
+        }
+
+        printf("\n");
+    }
 }
 
 void OuterWalls(){
@@ -658,7 +708,7 @@ void ChangeWalls(int temp){
 
 //Generates a random boolean in the form of 0 and 1.
 //Parameter "percent": is the chance out of 100 that this function will return 1.
-int PercentChance(int percent){
+int PercentChance(float percent){
     int rnd;
     rnd = rand() % 100 + 1;
 
@@ -668,6 +718,7 @@ int PercentChance(int percent){
     return 0;
 }
 
+//TODO: do i need this?
 unsigned int RandomRange(int min, int max){
     double scaled = (double)rand()/RAND_MAX;
 
