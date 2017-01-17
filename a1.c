@@ -19,16 +19,17 @@
 ///
 /// Wall Settings
 ///
-#define WALL_TOGGLE_PERCENT_CHANCE 10
 #define CHANGE_WALLS_TIME 1500
 #define AUTO_CHANGE_WALLS 1
+
+#define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
-#define WALL_HEIGHT 2
+#define NODE_COLOUR 2
 #define MAX_WALLS 20
 
 #define WALL_COUNT_X 6
-#define WALL_COUNT_Y 6
-#define WALL_LENGTH 3
+#define WALL_COUNT_Z 6
+#define WALL_HEIGHT 2
 
 ///
 /// Player Settings
@@ -53,8 +54,8 @@ int lastGravityTime;
 ///
 /// Nodes and Walls
 ///
-Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Y];
-Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
+Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Z];
+Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
 
 
 
@@ -62,6 +63,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Y - 1];
 ///Extension forward declarations
 ///
 void SetupWalls();
+void SetupNodes();
 void ChangeWalls();
 void ClearWorld();
 void OuterWalls();
@@ -452,6 +454,7 @@ int main(int argc, char** argv)
 
         ClearWorld();
         OuterWalls();
+        SetupNodes();
         SetupWalls();
 
 
@@ -523,6 +526,26 @@ void ClearWorld(){
 
 }
 
+void SetupNodes(){
+    int x, z, height;
+    int wallLengthX, wallLengthZ;
+
+    wallLengthX = WORLDX / WALL_COUNT_X;
+    wallLengthZ = WORLDZ / WALL_COUNT_Z;
+
+    for(x = 1; x < WALL_COUNT_X; x++){
+        for(z = 1; z < WALL_COUNT_Z; z++){
+
+            for(height = 0; height < WALL_HEIGHT; height++){
+                world[x * wallLengthX][1 + height][z * wallLengthZ] = NODE_COLOUR;
+            }
+
+        }
+    }
+
+}
+
+
 void SetupWalls(){
     double vertWallChance, horWallChance;
     double maxVertWalls, maxHorWalls;
@@ -535,7 +558,7 @@ void SetupWalls(){
     /// Clear Horizontal Walls
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Y - 1; y++){
+        for(y = 0; y < WALL_COUNT_Z - 1; y++){
             horizontalWalls[x][y].movementDirection = none;
             horizontalWalls[x][y].percentClosed = 0;
             horizontalWalls[x][y].state = open;
@@ -546,30 +569,28 @@ void SetupWalls(){
     /// Clear Vertical Walls
     ///
     for(x = 0; x < WALL_COUNT_X - 1; x++){
-        for(y = 0; y < WALL_COUNT_Y; y++){
+        for(y = 0; y < WALL_COUNT_Z; y++){
             verticalWalls[x][y].movementDirection = none;
             verticalWalls[x][y].percentClosed = 0;
             verticalWalls[x][y].state = open;
         }
     }
 
-    maxVertWalls = (WALL_COUNT_X - 1) * WALL_COUNT_Y;
-    maxHorWalls = WALL_COUNT_X * (WALL_COUNT_Y - 1);
+    maxVertWalls = (WALL_COUNT_X - 1) * WALL_COUNT_Z;
+    maxHorWalls = WALL_COUNT_X * (WALL_COUNT_Z - 1);
 
     vertWallChance = ((MAX_WALLS / 2) / maxVertWalls) * 100;
     horWallChance = ((MAX_WALLS / 2) / maxHorWalls) * 100;
-    printf("MEOW: %f\n", maxVertWalls);
-    printf("WALL CHANCE: %f\n", vertWallChance);
 
     vertWalls = 0;
     horWalls = 0;
 
 
     ///
-    /// Place Horizontal walls
+    /// Generate Horizontal walls
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Y - 1; y++){
+        for(y = 0; y < WALL_COUNT_Z - 1; y++){
 
             rnd = PercentChance(vertWallChance);
             if(rnd){
@@ -579,7 +600,7 @@ void SetupWalls(){
 
                 if(horWalls >= MAX_WALLS/2){
                     x = WALL_COUNT_X;
-                    y = WALL_COUNT_Y;
+                    y = WALL_COUNT_Z;
                 }
 
             }
@@ -589,14 +610,13 @@ void SetupWalls(){
 
 
     ///
-    /// Place Vertical Walls
+    /// Generate Vertical Walls
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Y - 1; y++){
+        for(y = 0; y < WALL_COUNT_Z - 1; y++){
 
             rnd = PercentChance(horWallChance);
             if(rnd){
-                    printf("8");
 
                 vertWalls++;
                 verticalWalls[x][y].percentClosed = 100;
@@ -604,18 +624,17 @@ void SetupWalls(){
 
                 if(vertWalls >= MAX_WALLS/2){
                     x = WALL_COUNT_X;
-                    y = WALL_COUNT_Y;
+                    y = WALL_COUNT_Z;
                 }
-            }
-            else{
-                    printf("-");
             }
 
         }
 
-        printf("\n");
     }
+
+
 }
+
 
 void OuterWalls(){
     int i, height;
@@ -623,81 +642,14 @@ void OuterWalls(){
     for(height = 0; height < WALL_HEIGHT; height++){
         /* blue box shows xy bounds of the world */
         for(i=0; i<WORLDX-1; i++) {
-            world[i][1 + height][0] = WALL_COLOUR;
-            world[i][1 + height][WORLDZ-1] = WALL_COLOUR;
+            world[i][1 + height][0] = OUTER_WALL_COLOR;
+            world[i][1 + height][WORLDZ-1] = OUTER_WALL_COLOR;
         }
         for(i=0; i<WORLDZ-1; i++) {
-            world[0][1 + height][i] = WALL_COLOUR;
-            world[WORLDX-1][1 + height][i] = WALL_COLOUR;
+            world[0][1 + height][i] = OUTER_WALL_COLOR;
+            world[WORLDX-1][1 + height][i] = OUTER_WALL_COLOR;
         }
     }
-
-}
-
-
-void ChangeWalls(int temp){
-    int i, j, offset;
-
-    if(AUTO_CHANGE_WALLS == 1){
-        glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
-    }
-
-
-    //Randomize walls running along the x axis
-    for(i=10; i<WORLDX-1; i+=10){
-        for(j=10; j<WORLDZ-1; j+=10){
-
-            int toggleColour;
-
-            if(PercentChance(WALL_TOGGLE_PERCENT_CHANCE) == 0){
-                continue;
-            }
-
-            if(world[i + 1][1][j] == 0){
-                toggleColour = WALL_COLOUR;
-            }
-            else{
-                toggleColour = 0;
-            }
-
-
-            for(offset = 1; offset < 10; offset++){
-                world[i + offset][1][j] = toggleColour;
-            }
-
-
-        }
-    }
-
-    //Randomize walls running along the y axis
-    for(i=10; i<WORLDX-1; i+=10){
-        for(j=10; j<WORLDZ-1; j+=10){
-
-            int toggleColour;
-
-            if(PercentChance(WALL_TOGGLE_PERCENT_CHANCE) == 0){
-                continue;
-            }
-
-            if(world[i][1][j + 1] == 0){
-                toggleColour = WALL_COLOUR;
-            }
-            else{
-                toggleColour = 0;
-            }
-
-
-            for(offset = 1; offset < 10; offset++){
-                world[i][1][j + offset] = toggleColour;
-            }
-
-
-        }
-    }
-
-    OuterWalls();
-
-
 
 }
 
