@@ -46,10 +46,10 @@ typedef enum _Direction{
 
 typedef struct _Wall{
     float percentClosed;
+    Direction direction;
     WallState state;
-    Direction movementDirection;
 } Wall;
 
 typedef struct _Node{
-    Wall north, south, east, west;
+    Wall *north, *south, *east, *west;
 } Node;

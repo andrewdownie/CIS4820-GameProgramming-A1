@@ -14,7 +14,7 @@
 
 #include "graphics.h"
 
-#define FLOOR_COLOR 3
+
 
 ///
 /// Wall Settings
@@ -27,10 +27,14 @@
 #define WALL_COLOUR 1
 #define NODE_COLOUR 2
 
+#define FLOOR_COLOR 3
+
 #define WALL_COUNT_X 6
 #define WALL_COUNT_Z 6
 #define WALL_HEIGHT 2
 #define WALL_LENGTH 5
+
+
 
 ///
 /// Runtime Generated "Constants"
@@ -61,8 +65,9 @@ int lastGravityTime;
 ///
 /// Nodes and Walls
 ///
-Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Z];
-Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
+Node nodes[WALL_COUNT_X][WALL_COUNT_Z];
+//Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Z];
+//Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
 
 
 
@@ -565,91 +570,161 @@ void BuildWorldShell(){
 
 
 void SetupWalls(){
-    double vertWallChance, horWallChance;
-    double maxVertWalls, maxHorWalls;
-    int vertWalls, horWalls;
-    int rnd;
-    int x, y;
+    float spawnChance;
+    int x, z, height;
+    int wallRefs;
+    //////////int rnd;
 
+    Wall *newWall;
 
     ///
-    /// Clear Horizontal Walls
+    /// Set nodes to null
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Z - 1; y++){
-            horizontalWalls[x][y].movementDirection = none;
-            horizontalWalls[x][y].percentClosed = 0;
-            horizontalWalls[x][y].state = open;
+        for(z = 0; z < WALL_COUNT_Z; z++){
+            nodes[x][z].north = NULL;
+            nodes[x][z].south = NULL;
+            nodes[x][z].east = NULL;
+            nodes[x][z].west = NULL;
         }
     }
 
-    ///
-    /// Clear Vertical Walls
-    ///
-    for(x = 0; x < WALL_COUNT_X - 1; x++){
-        for(y = 0; y < WALL_COUNT_Z; y++){
-            verticalWalls[x][y].movementDirection = none;
-            verticalWalls[x][y].percentClosed = 0;
-            verticalWalls[x][y].state = open;
-        }
-    }
 
-    maxVertWalls = (WALL_COUNT_X - 1) * WALL_COUNT_Z;
-    maxHorWalls = WALL_COUNT_X * (WALL_COUNT_Z - 1);
-
-    vertWallChance = ((MAX_WALLS / 2) / maxVertWalls) * 100;
-    horWallChance = ((MAX_WALLS / 2) / maxHorWalls) * 100;
-
-    vertWalls = 0;
-    horWalls = 0;
+    wallRefs = 4 * ((WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1));
+    spawnChance = (MAX_WALLS * 100) / wallRefs;
 
 
-    ///
-    /// Generate Horizontal walls
-    ///
-    for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Z - 1; y++){
 
-            rnd = PercentChance(vertWallChance);
-            if(rnd){
-                horWalls++;
-                horizontalWalls[x][y].percentClosed = 100;
-                horizontalWalls[x][y].state = closed;
+    for(x = 0; x < WALL_COUNT_X; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
+        for(z = 0; z < WALL_COUNT_Z; z++){
 
-                if(horWalls >= MAX_WALLS/2){
-                    x = WALL_COUNT_X;
-                    y = WALL_COUNT_Z;
+            ///
+            /// North wall
+            ///
+            //////rnd = PercentChance(spawnChance);
+            ///////printf("RND was: %f\n", spawnChance);
+            if(nodes[x][z].north == NULL && PercentChance(spawnChance)){
+                newWall = (Wall*)malloc(sizeof(Wall));
+
+                newWall->percentClosed = 100;
+                newWall->state = closed;
+                newWall->direction = none;
+
+                nodes[x][z].north = newWall;
+                //printf("Set north wall of %d, %d\n", x, z);
+
+                if(z > 0){
+                    nodes[x][z - 1].south = newWall;
                 }
 
             }
 
-        }
-    }
+            ///
+            /// South wall
+            ///
+            if(nodes[x][z].south == NULL && PercentChance(spawnChance)){
+                newWall = (Wall*)malloc(sizeof(Wall));
 
+                newWall->percentClosed = 100;
+                newWall->state = closed;
+                newWall->direction = none;
 
-    ///
-    /// Generate Vertical Walls
-    ///
-    for(x = 0; x < WALL_COUNT_X; x++){
-        for(y = 0; y < WALL_COUNT_Z - 1; y++){
+                nodes[x][z].south = newWall;
 
-            rnd = PercentChance(horWallChance);
-            if(rnd){
-
-                vertWalls++;
-                verticalWalls[x][y].percentClosed = 100;
-                verticalWalls[x][y].state = closed;
-
-                if(vertWalls >= MAX_WALLS/2){
-                    x = WALL_COUNT_X;
-                    y = WALL_COUNT_Z;
+                if(z < WALL_COUNT_Z + 1){
+                    nodes[x][z + 1].north = newWall;
                 }
+
             }
 
+
+            ///
+            /// East Wall
+            ///
+            if(nodes[x][z].east == NULL && PercentChance(spawnChance)){
+                newWall = (Wall*)malloc(sizeof(Wall));
+
+                newWall->percentClosed = 100;
+                newWall->state = closed;
+                newWall->direction = none;
+
+                nodes[x][z].east = newWall;
+
+                if(x < WALL_COUNT_X - 1){
+                    nodes[x + 1][z].west = newWall;
+                }
+
+            }
+
+            ///
+            /// West Wall
+            ///
+            if(nodes[x][z].west == NULL && PercentChance(spawnChance)){
+                newWall = (Wall*)malloc(sizeof(Wall));
+
+                newWall->percentClosed = 100;
+                newWall->state = closed;
+                newWall->direction = none;
+
+                nodes[x][z].west = newWall;
+
+                if(x > 0){
+                    nodes[x - 1][z].east = newWall;
+                }
+
+            }
         }
+
+
 
     }
 
+    //here
+    for(z = 0; z < WALL_COUNT_Z; z++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
+
+        for(x = 0; x < WALL_COUNT_X; x++){
+            putchar(' ');
+
+
+            if(nodes[x][z].north != NULL){
+                putchar('^');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar(' ');
+        }
+        putchar('\n');
+
+        for(x = 0; x < WALL_COUNT_X; x++){
+            if(nodes[x][z].west != NULL){
+                putchar('<');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar('+');
+            if(nodes[x][z].east != NULL){
+                putchar('>');
+            }
+            else{
+                putchar(' ');
+            }
+        }
+        putchar('\n');
+
+        for(x = 0; x < WALL_COUNT_X; x++){
+            putchar(' ');
+            if(nodes[x][z].south != NULL){
+                putchar('V');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar(' ');
+        }
+        putchar('\n');
+    }
 
 }
 
