@@ -70,8 +70,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
 ///Extension forward declarations
 ///
 void SetupWalls();
-void SetupNodes();
-void BuildWorld();
+void BuildWorldShell();
 
 ///
 /// Utility forward delcarations
@@ -460,8 +459,7 @@ int main(int argc, char** argv)
         MAP_SIZE_X = (WALL_COUNT_X * WALL_LENGTH) + WALL_COUNT_X + 2;
         MAP_SIZE_Z = (WALL_COUNT_Z * WALL_LENGTH) + WALL_COUNT_Z + 2;
 
-        BuildWorld();
-        SetupNodes();
+        BuildWorldShell();
         SetupWalls();
 
 
@@ -508,17 +506,17 @@ int main(int argc, char** argv)
 ///// World Building Functions -------------------------------------------------
 /////
 
-void BuildWorld(){
-    int offset;
-    int i, j, k;
+void BuildWorldShell(){
+    int x, y, z;
+    int height;
 
     ///
     /// initialize world to empty
     ///
-    for(i=0; i<WORLDX; i++){
-        for(j=0; j<WORLDY; j++){
-            for(k=0; k<WORLDZ; k++){
-                world[i][j][k] = 0;
+    for(x=0; x<WORLDX; x++){
+        for(y=0; y<WORLDY; y++){
+            for(z=0; z<WORLDZ; z++){
+                world[x][y][z] = 0;
             }
         }
     }
@@ -526,34 +524,32 @@ void BuildWorld(){
     ///
     /// build the floor
     ///
-    for(i=0; i < MAP_SIZE_X; i++) {
-        for(j=0; j < MAP_SIZE_Z; j++) {
-            world[i][0][j] = FLOOR_COLOR;
+    for(x=0; x < MAP_SIZE_X; x++) {
+        for(z=0; z < MAP_SIZE_Z; z++) {
+            world[x][0][z] = FLOOR_COLOR;
         }
     }
 
     ///
     /// build the outer walls
     ///
-    for(offset = 0; offset < WALL_HEIGHT; offset++){
+    for(height = 0; height < WALL_HEIGHT; height++){
 
-        for(i=0; i< MAP_SIZE_X; i++) {
-            world[i][1 + offset][0] = OUTER_WALL_COLOR;
-            world[i][1 + offset][MAP_SIZE_X-1] = OUTER_WALL_COLOR;
+        for(x=0; x< MAP_SIZE_X; x++) {
+            world[x][1 + height][0] = OUTER_WALL_COLOR;
+            world[x][1 + height][MAP_SIZE_X-1] = OUTER_WALL_COLOR;
         }
 
-        for(i=0; i< MAP_SIZE_Z; i++) {
-            world[0][1 + offset][i] = OUTER_WALL_COLOR;
-            world[MAP_SIZE_Z-1][1 + offset][i] = OUTER_WALL_COLOR;
+        for(z=0; z< MAP_SIZE_Z; z++) {
+            world[0][1 + height][z] = OUTER_WALL_COLOR;
+            world[MAP_SIZE_Z-1][1 + height][z] = OUTER_WALL_COLOR;
         }
 
     }
 
-}
-
-void SetupNodes(){
-    int x, z, height;
-
+    ///
+    /// Create the nodes
+    ///
     for(x = 1; x < WALL_COUNT_X; x++){
         for(z = 1; z < WALL_COUNT_Z; z++){
 
@@ -565,6 +561,7 @@ void SetupNodes(){
     }
 
 }
+
 
 
 void SetupWalls(){

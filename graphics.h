@@ -49,3 +49,7 @@ typedef struct _Wall{
     WallState state;
     Direction movementDirection;
 } Wall;
+
+typedef struct _Node{
+    Wall north, south, east, west;
+} Node;
