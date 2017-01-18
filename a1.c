@@ -21,15 +21,22 @@
 ///
 #define CHANGE_WALLS_TIME 1500
 #define AUTO_CHANGE_WALLS 1
+#define MAX_WALLS 20
 
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
 #define NODE_COLOUR 2
-#define MAX_WALLS 20
 
 #define WALL_COUNT_X 6
 #define WALL_COUNT_Z 6
 #define WALL_HEIGHT 2
+#define WALL_LENGTH 5
+
+///
+/// Runtime Generated "Constants"
+///
+int MAP_SIZE_X;
+int MAP_SIZE_Z;
 
 ///
 /// Player Settings
@@ -64,9 +71,7 @@ Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
 ///
 void SetupWalls();
 void SetupNodes();
-void ChangeWalls();
-void ClearWorld();
-void OuterWalls();
+void BuildWorld();
 
 ///
 /// Utility forward delcarations
@@ -452,8 +457,10 @@ int main(int argc, char** argv)
         ///
         lastGravityTime = 0;
 
-        ClearWorld();
-        OuterWalls();
+        MAP_SIZE_X = (WALL_COUNT_X * WALL_LENGTH) + WALL_COUNT_X + 2;
+        MAP_SIZE_Z = (WALL_COUNT_Z * WALL_LENGTH) + WALL_COUNT_Z + 2;
+
+        BuildWorld();
         SetupNodes();
         SetupWalls();
 
@@ -501,11 +508,13 @@ int main(int argc, char** argv)
 ///// World Building Functions -------------------------------------------------
 /////
 
-void ClearWorld(){
+void BuildWorld(){
     int offset;
     int i, j, k;
 
-    /* initialize world to empty */
+    ///
+    /// initialize world to empty
+    ///
     for(i=0; i<WORLDX; i++){
         for(j=0; j<WORLDY; j++){
             for(k=0; k<WORLDZ; k++){
@@ -514,30 +523,42 @@ void ClearWorld(){
         }
     }
 
-
-    /* build the floor*/
-    for(i=0; i<WORLDX; i++) {
-        for(j=0; j<WORLDZ; j++) {
+    ///
+    /// build the floor
+    ///
+    for(i=0; i < MAP_SIZE_X; i++) {
+        for(j=0; j < MAP_SIZE_Z; j++) {
             world[i][0][j] = FLOOR_COLOR;
         }
     }
 
+    ///
+    /// build the outer walls
+    ///
+    for(offset = 0; offset < WALL_HEIGHT; offset++){
 
+        for(i=0; i< MAP_SIZE_X; i++) {
+            world[i][1 + offset][0] = OUTER_WALL_COLOR;
+            world[i][1 + offset][MAP_SIZE_X-1] = OUTER_WALL_COLOR;
+        }
+
+        for(i=0; i< MAP_SIZE_Z; i++) {
+            world[0][1 + offset][i] = OUTER_WALL_COLOR;
+            world[MAP_SIZE_Z-1][1 + offset][i] = OUTER_WALL_COLOR;
+        }
+
+    }
 
 }
 
 void SetupNodes(){
     int x, z, height;
-    int wallLengthX, wallLengthZ;
-
-    wallLengthX = WORLDX / WALL_COUNT_X;
-    wallLengthZ = WORLDZ / WALL_COUNT_Z;
 
     for(x = 1; x < WALL_COUNT_X; x++){
         for(z = 1; z < WALL_COUNT_Z; z++){
 
             for(height = 0; height < WALL_HEIGHT; height++){
-                world[x * wallLengthX][1 + height][z * wallLengthZ] = NODE_COLOUR;
+                world[x * (WALL_LENGTH + 1)][1 + height][z * (WALL_LENGTH + 1)] = NODE_COLOUR;
             }
 
         }
@@ -635,21 +656,8 @@ void SetupWalls(){
 
 }
 
-
-void OuterWalls(){
-    int i, height;
-
-    for(height = 0; height < WALL_HEIGHT; height++){
-        /* blue box shows xy bounds of the world */
-        for(i=0; i<WORLDX-1; i++) {
-            world[i][1 + height][0] = OUTER_WALL_COLOR;
-            world[i][1 + height][WORLDZ-1] = OUTER_WALL_COLOR;
-        }
-        for(i=0; i<WORLDZ-1; i++) {
-            world[0][1 + height][i] = OUTER_WALL_COLOR;
-            world[WORLDX-1][1 + height][i] = OUTER_WALL_COLOR;
-        }
-    }
+void SetVerticalWall(int x, int y, float percentClosed){
+    int posX, posY;
 
 }
 
