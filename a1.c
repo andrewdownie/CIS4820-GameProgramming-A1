@@ -76,6 +76,8 @@ Node nodes[WALL_COUNT_X][WALL_COUNT_Z];
 ///
 void SetupWalls();
 void BuildWorldShell();
+void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
+void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
 
 ///
 /// Utility forward delcarations
@@ -467,6 +469,9 @@ int main(int argc, char** argv)
         BuildWorldShell();
         SetupWalls();
 
+        PlaceVerticalWall(nodes[0][0].north, WALL_LENGTH + 1, 1);
+        PlaceHorizontalWall(nodes[0][0].east, 1, WALL_LENGTH + 1);
+
 
         ///Setup some cubes to climb up for testing
         world[0][2][1] = 5;
@@ -679,7 +684,10 @@ void SetupWalls(){
 
     }
 
-    //here
+    ///
+    /// This is for debugging purposes only
+    ///
+    printf("DEBUGGING INFO FOR WALL GENERATION\n");
     for(z = 0; z < WALL_COUNT_Z; z++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
 
         for(x = 0; x < WALL_COUNT_X; x++){
@@ -728,8 +736,29 @@ void SetupWalls(){
 
 }
 
-void SetVerticalWall(int x, int y, float percentClosed){
-    int posX, posY;
+void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
+    int yOffset, z;
+
+    for(z = 0; z < WALL_LENGTH; z++){
+
+        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+            world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
+        }
+
+    }
+
+}
+
+void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
+    int yOffset, x;
+
+    for(x = 0; x < WALL_LENGTH; x++){
+
+        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+            world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
+        }
+
+    }
 
 }
 
