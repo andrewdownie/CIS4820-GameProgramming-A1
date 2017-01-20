@@ -45,7 +45,7 @@ int MAP_SIZE_Z;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 1
+#define GRAVITY_ENABLED 0
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -78,6 +78,7 @@ void SetupWalls();
 void BuildWorldShell();
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
+void PlaceWalls();
 
 ///
 /// Utility forward delcarations
@@ -468,9 +469,7 @@ int main(int argc, char** argv)
 
         BuildWorldShell();
         SetupWalls();
-
-        PlaceVerticalWall(nodes[0][0].north, WALL_LENGTH + 1, 1);
-        PlaceHorizontalWall(nodes[0][0].east, 1, WALL_LENGTH + 1);
+        PlaceWalls();
 
 
         ///Setup some cubes to climb up for testing
@@ -534,8 +533,8 @@ void BuildWorldShell(){
     ///
     /// build the floor
     ///
-    for(x=0; x < MAP_SIZE_X; x++) {
-        for(z=0; z < MAP_SIZE_Z; z++) {
+    for(x=0; x < MAP_SIZE_X - 1; x++) {
+        for(z=0; z < MAP_SIZE_Z - 1; z++) {
             world[x][0][z] = FLOOR_COLOR;
         }
     }
@@ -545,14 +544,14 @@ void BuildWorldShell(){
     ///
     for(height = 0; height < WALL_HEIGHT; height++){
 
-        for(x=0; x< MAP_SIZE_X; x++) {
+        for(x=0; x < MAP_SIZE_X - 1; x++) {
             world[x][1 + height][0] = OUTER_WALL_COLOR;
-            world[x][1 + height][MAP_SIZE_X-1] = OUTER_WALL_COLOR;
+            world[x][1 + height][MAP_SIZE_Z-2] = OUTER_WALL_COLOR;
         }
 
-        for(z=0; z< MAP_SIZE_Z; z++) {
+        for(z=0; z < MAP_SIZE_Z - 1; z++) {
             world[0][1 + height][z] = OUTER_WALL_COLOR;
-            world[MAP_SIZE_Z-1][1 + height][z] = OUTER_WALL_COLOR;
+            world[MAP_SIZE_X-2][1 + height][z] = OUTER_WALL_COLOR;
         }
 
     }
@@ -759,6 +758,28 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
         }
 
     }
+
+}
+
+void PlaceWalls(){
+    int x, z;
+
+    printf("PLACE WALLS\n");
+
+    for(x = 1; x < WALL_COUNT_X; x++){
+        for(z = 1; z < WALL_COUNT_Z; z++){
+            if(x == 1){
+                PlaceHorizontalWall(nodes[x][z].west, 1, WALL_LENGTH * z + z);
+            }
+            if(z == 1){
+                PlaceVerticalWall(nodes[x][z].south, WALL_LENGTH * x + x, 1);
+            }
+
+            PlaceVerticalWall(nodes[x][z].south, WALL_LENGTH * x + x, z * WALL_LENGTH + z + 1);
+            PlaceHorizontalWall(nodes[x][z].west, x * WALL_LENGTH + x + 1, WALL_LENGTH * z + z);
+        }
+    }
+
 
 }
 
