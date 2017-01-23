@@ -17,7 +17,7 @@
 
 
 ///
-/// Wall Settings
+/// Wall and floor settings
 ///
 #define CHANGE_WALLS_TIME 1500
 #define AUTO_CHANGE_WALLS 1
@@ -26,7 +26,6 @@
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
 #define NODE_COLOUR 2
-
 #define FLOOR_COLOR 3
 
 #define WALL_COUNT_X 6
@@ -45,7 +44,7 @@ int MAP_SIZE_Z;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 0
+#define GRAVITY_ENABLED 1
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -65,9 +64,7 @@ int lastGravityTime;
 ///
 /// Nodes and Walls
 ///
-Node nodes[WALL_COUNT_X][WALL_COUNT_Z];
-//Wall verticalWalls[WALL_COUNT_X - 1][WALL_COUNT_Z];
-//Wall horizontalWalls[WALL_COUNT_X][WALL_COUNT_Z - 1];
+Node nodes[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 
 
 
