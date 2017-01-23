@@ -19,7 +19,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME 1500
+#define CHANGE_WALLS_TIME 3000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 20
 
@@ -78,6 +78,8 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
 void PlaceWalls();
 
+void ChangeWalls();
+
 ///
 /// Utility forward delcarations
 ///
@@ -87,6 +89,7 @@ int PercentChance(float chance);
 
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
+void PrintWallGeneration();
 
 
 
@@ -467,7 +470,9 @@ int main(int argc, char** argv)
 
         BuildWorldShell();
         SetupWalls();
+        PrintWallGeneration();
         PlaceWalls();
+
         printf("Wall count: %d\n", totalWalls);
 
 
@@ -479,14 +484,14 @@ int main(int argc, char** argv)
         world[2][2][1] = 5;
         world[3][2][1] = 5;
         world[3][1][2] = 5;
-        world[2][3][3] = 5;
+        //world[2][3][3] = 5;
 
-        world[2][3][2] = 5;
+        //world[2][3][2] = 5;
 
 
 
         if(AUTO_CHANGE_WALLS == 1){
-            //    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+            glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
         }
 
 
@@ -753,56 +758,6 @@ void SetupWalls(){
 
     }
 
-    ///
-    /// This is for debugging purposes only
-    ///
-    printf("DEBUGGING INFO FOR WALL GENERATION\n");
-    for(z = 0; z < WALL_COUNT_Z - 1; z++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
-
-        for(x = 0; x < WALL_COUNT_X - 1; x++){
-            putchar(' ');
-
-
-            if(nodes[x][z].north->percentClosed == 100){
-                putchar('|');
-            }
-            else{
-                putchar(' ');
-            }
-            putchar(' ');
-        }
-        putchar('\n');
-
-        for(x = 0; x < WALL_COUNT_X - 1; x++){
-            if(nodes[x][z].west->percentClosed == 100){
-                putchar('-');
-            }
-            else{
-                putchar(' ');
-            }
-            putchar('+');
-            if(nodes[x][z].east->percentClosed == 100){
-                putchar('-');
-            }
-            else{
-                putchar(' ');
-            }
-        }
-        putchar('\n');
-
-        for(x = 0; x < WALL_COUNT_X - 1; x++){
-            putchar(' ');
-            if(nodes[x][z].south->percentClosed == 100){
-                putchar('|');
-            }
-            else{
-                putchar(' ');
-            }
-            putchar(' ');
-        }
-        putchar('\n');
-    }
-
 }
 
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
@@ -857,6 +812,44 @@ void PlaceWalls(){
     }
 
 
+}
+
+
+void ChangeWalls(){
+    int randomNode, randomWall, nodeCount;
+    int randX, randZ;
+
+
+    nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
+    randomNode = rand() % nodeCount + 1;
+    randomWall = rand() % 4;
+
+    randX = randomNode / WALL_COUNT_X;
+    randZ = randomNode % WALL_COUNT_X;
+
+    printf("X: %d, Z: %d, WALL: %d\n", randX, randZ, randomWall);
+
+    Node *node = &(nodes[randX][randZ]);
+
+    if(randomWall == 0){
+        printf("North wall\n");
+        PlaceVerticalWall(node->north, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1));
+    }
+    else if(randomWall == 1){
+        printf("East wall\n");
+        PlaceVerticalWall(node->east, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1) + 1);
+    }
+    else if(randomWall == 2){
+        printf("South wall\n");
+        PlaceVerticalWall(node->south, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1));
+    }
+    else{
+        printf("West wall\n");
+        PlaceVerticalWall(node->west, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1) + 1);
+    }
+
+
+    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
 }
 
 
@@ -917,4 +910,60 @@ float DeltaGravity(int lastCollisionTime){
     int currentTime = glutGet(GLUT_ELAPSED_TIME);
     int deltaTime = currentTime - lastCollisionTime;
     return GRAVITY_RATE * deltaTime / 1000;
+}
+
+
+void PrintWallGeneration(){
+    int x, z;
+
+    ///
+    /// This is for debugging purposes only
+    ///
+    printf("DEBUGGING INFO FOR WALL GENERATION\n");
+    for(z = 0; z < WALL_COUNT_Z - 1; z++){
+
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
+            putchar(' ');
+
+
+            if(nodes[x][z].north->percentClosed == 100){
+                putchar('|');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar(' ');
+        }
+        putchar('\n');
+
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
+            if(nodes[x][z].west->percentClosed == 100){
+                putchar('-');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar('+');
+            if(nodes[x][z].east->percentClosed == 100){
+                putchar('-');
+            }
+            else{
+                putchar(' ');
+            }
+        }
+        putchar('\n');
+
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
+            putchar(' ');
+            if(nodes[x][z].south->percentClosed == 100){
+                putchar('|');
+            }
+            else{
+                putchar(' ');
+            }
+            putchar(' ');
+        }
+        putchar('\n');
+    }
+
 }
