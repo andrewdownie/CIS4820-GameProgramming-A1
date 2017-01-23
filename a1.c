@@ -798,10 +798,10 @@ void PlaceWalls(){
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             if(x == 0){
-            //    PlaceHorizontalWall(nodes[x][z].west, WALL_LENGTH + 1, (WALL_LENGTH + 1) * (z + 1) );
+                PlaceHorizontalWall(nodes[x][z].west,1, (WALL_LENGTH + 1) * (z + 1) );
             }
             if(z == 0){
-            //    PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), WALL_LENGTH + 1);
+                PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), 1);
             }
 
             PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1) );
