@@ -44,7 +44,7 @@ int MAP_SIZE_Z;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 1
+#define GRAVITY_ENABLED 0
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -604,12 +604,19 @@ void SetupWalls(){
             ///
             //////rnd = PercentChance(spawnChance);
             ///////printf("RND was: %f\n", spawnChance);
-            if(nodes[x][z].north == NULL && PercentChance(spawnChance)){
+            if(nodes[x][z].north == NULL){
                 newWall = (Wall*)malloc(sizeof(Wall));
 
-                newWall->percentClosed = 100;
-                newWall->state = closed;
                 newWall->direction = none;
+
+                if(PercentChance(spawnChance)){
+                    newWall->percentClosed = 100;
+                    newWall->state = closed;
+                }
+                else{
+                    newWall->percentClosed = 0;
+                    newWall->state = open;
+                }
 
                 nodes[x][z].north = newWall;
                 //printf("Set north wall of %d, %d\n", x, z);
@@ -623,12 +630,19 @@ void SetupWalls(){
             ///
             /// South wall
             ///
-            if(nodes[x][z].south == NULL && PercentChance(spawnChance)){
+            if(nodes[x][z].south == NULL){
                 newWall = (Wall*)malloc(sizeof(Wall));
 
-                newWall->percentClosed = 100;
-                newWall->state = closed;
                 newWall->direction = none;
+
+                if(PercentChance(spawnChance)){
+                    newWall->percentClosed = 100;
+                    newWall->state = closed;
+                }
+                else{
+                    newWall->percentClosed = 0;
+                    newWall->state = open;
+                }
 
                 nodes[x][z].south = newWall;
 
@@ -642,12 +656,20 @@ void SetupWalls(){
             ///
             /// East Wall
             ///
-            if(nodes[x][z].east == NULL && PercentChance(spawnChance)){
+            if(nodes[x][z].east == NULL){
                 newWall = (Wall*)malloc(sizeof(Wall));
 
-                newWall->percentClosed = 100;
-                newWall->state = closed;
                 newWall->direction = none;
+
+                if(PercentChance(spawnChance)){
+                    newWall->percentClosed = 100;
+                    newWall->state = closed;
+                }
+                else{
+                    newWall->percentClosed = 0;
+                    newWall->state = open;
+                }
+
 
                 nodes[x][z].east = newWall;
 
@@ -660,12 +682,19 @@ void SetupWalls(){
             ///
             /// West Wall
             ///
-            if(nodes[x][z].west == NULL && PercentChance(spawnChance)){
+            if(nodes[x][z].west == NULL){
                 newWall = (Wall*)malloc(sizeof(Wall));
 
-                newWall->percentClosed = 100;
-                newWall->state = closed;
                 newWall->direction = none;
+
+                if(PercentChance(spawnChance)){
+                    newWall->percentClosed = 100;
+                    newWall->state = closed;
+                }
+                else{
+                    newWall->percentClosed = 0;
+                    newWall->state = open;
+                }
 
                 nodes[x][z].west = newWall;
 
@@ -690,7 +719,7 @@ void SetupWalls(){
             putchar(' ');
 
 
-            if(nodes[x][z].north != NULL){
+            if(nodes[x][z].north->percentClosed == 100){
                 putchar('^');
             }
             else{
@@ -701,14 +730,14 @@ void SetupWalls(){
         putchar('\n');
 
         for(x = 0; x < WALL_COUNT_X; x++){
-            if(nodes[x][z].west != NULL){
+            if(nodes[x][z].west->percentClosed == 100){
                 putchar('<');
             }
             else{
                 putchar(' ');
             }
             putchar('+');
-            if(nodes[x][z].east != NULL){
+            if(nodes[x][z].east->percentClosed == 100){
                 putchar('>');
             }
             else{
@@ -719,7 +748,7 @@ void SetupWalls(){
 
         for(x = 0; x < WALL_COUNT_X; x++){
             putchar(' ');
-            if(nodes[x][z].south != NULL){
+            if(nodes[x][z].south->percentClosed == 100){
                 putchar('V');
             }
             else{
@@ -735,10 +764,13 @@ void SetupWalls(){
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
     int yOffset, z;
 
+
     for(z = 0; z < WALL_LENGTH; z++){
 
         for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
             world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
+
+            //TODO: make the walls fill in here
         }
 
     }
