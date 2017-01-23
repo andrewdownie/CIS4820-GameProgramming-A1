@@ -602,8 +602,6 @@ void SetupWalls(){
             ///
             /// North wall
             ///
-            //////rnd = PercentChance(spawnChance);
-            ///////printf("RND was: %f\n", spawnChance);
             if(nodes[x][z].north == NULL){
                 newWall = (Wall*)malloc(sizeof(Wall));
 
@@ -713,14 +711,14 @@ void SetupWalls(){
     /// This is for debugging purposes only
     ///
     printf("DEBUGGING INFO FOR WALL GENERATION\n");
-    for(z = 0; z < WALL_COUNT_Z; z++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
+    for(z = 0; z < WALL_COUNT_Z - 1; z++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
 
-        for(x = 0; x < WALL_COUNT_X; x++){
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
             putchar(' ');
 
 
             if(nodes[x][z].north->percentClosed == 100){
-                putchar('^');
+                putchar('|');
             }
             else{
                 putchar(' ');
@@ -729,16 +727,16 @@ void SetupWalls(){
         }
         putchar('\n');
 
-        for(x = 0; x < WALL_COUNT_X; x++){
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
             if(nodes[x][z].west->percentClosed == 100){
-                putchar('<');
+                putchar('-');
             }
             else{
                 putchar(' ');
             }
             putchar('+');
             if(nodes[x][z].east->percentClosed == 100){
-                putchar('>');
+                putchar('-');
             }
             else{
                 putchar(' ');
@@ -746,10 +744,10 @@ void SetupWalls(){
         }
         putchar('\n');
 
-        for(x = 0; x < WALL_COUNT_X; x++){
+        for(x = 0; x < WALL_COUNT_X - 1; x++){
             putchar(' ');
             if(nodes[x][z].south->percentClosed == 100){
-                putchar('V');
+                putchar('|');
             }
             else{
                 putchar(' ');
@@ -762,15 +760,15 @@ void SetupWalls(){
 }
 
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
+    int actualWallLength;
     int yOffset, z;
 
 
-    for(z = 0; z < WALL_LENGTH; z++){
+    actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
+    for(z = 0; z < actualWallLength; z++){
 
         for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
             world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
-
-            //TODO: make the walls fill in here
         }
 
     }
@@ -778,9 +776,11 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
 }
 
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
+    int actualWallLength;
     int yOffset, x;
 
-    for(x = 0; x < WALL_LENGTH; x++){
+    actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
+    for(x = 0; x < actualWallLength; x++){
 
         for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
             world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
@@ -795,17 +795,17 @@ void PlaceWalls(){
 
     printf("PLACE WALLS\n");
 
-    for(x = 1; x < WALL_COUNT_X; x++){
-        for(z = 1; z < WALL_COUNT_Z; z++){
-            if(x == 1){
-                PlaceHorizontalWall(nodes[x][z].west, 1, WALL_LENGTH * z + z);
+    for(x = 0; x < WALL_COUNT_X - 1; x++){
+        for(z = 0; z < WALL_COUNT_Z - 1; z++){
+            if(x == 0){
+            //    PlaceHorizontalWall(nodes[x][z].west, WALL_LENGTH + 1, (WALL_LENGTH + 1) * (z + 1) );
             }
-            if(z == 1){
-                PlaceVerticalWall(nodes[x][z].south, WALL_LENGTH * x + x, 1);
+            if(z == 0){
+            //    PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), WALL_LENGTH + 1);
             }
 
-            PlaceVerticalWall(nodes[x][z].south, WALL_LENGTH * x + x, z * WALL_LENGTH + z + 1);
-            PlaceHorizontalWall(nodes[x][z].west, x * WALL_LENGTH + x + 1, WALL_LENGTH * z + z);
+            PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1) );
+            PlaceVerticalWall(nodes[x][z].south, (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1);
         }
     }
 
