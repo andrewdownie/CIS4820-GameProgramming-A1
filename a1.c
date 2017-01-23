@@ -40,6 +40,7 @@
 ///
 int MAP_SIZE_X;
 int MAP_SIZE_Z;
+int totalWalls;
 
 ///
 /// Player Settings
@@ -83,7 +84,6 @@ void PlaceWalls();
 int WalkablePiece(int x, int y, int z);
 int WalkablePiece_I3(Int3 xyz);
 int PercentChance(float chance);
-unsigned int RandomRange(int min, int max);
 
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
@@ -460,6 +460,7 @@ int main(int argc, char** argv)
         /// Set lastUpdateTime to zero
         ///
         lastGravityTime = 0;
+        totalWalls = 0;
 
         MAP_SIZE_X = (WALL_COUNT_X * WALL_LENGTH) + WALL_COUNT_X + 2;
         MAP_SIZE_Z = (WALL_COUNT_Z * WALL_LENGTH) + WALL_COUNT_Z + 2;
@@ -467,6 +468,7 @@ int main(int argc, char** argv)
         BuildWorldShell();
         SetupWalls();
         PlaceWalls();
+        printf("Wall count: %d\n", totalWalls);
 
 
         ///Setup some cubes to climb up for testing
@@ -808,6 +810,7 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
     int yOffset, z;
 
 
+
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(z = 0; z < actualWallLength; z++){
 
@@ -873,12 +876,6 @@ int PercentChance(float percent){
     return 0;
 }
 
-//TODO: do i need this?
-unsigned int RandomRange(int min, int max){
-    double scaled = (double)rand()/RAND_MAX;
-
-    return (max - min +1)*scaled + min;
-}
 
 int WalkablePiece(int x, int y, int z){
     int count = 0, height;
