@@ -21,7 +21,7 @@
 ///
 #define CHANGE_WALLS_TIME 1500
 #define AUTO_CHANGE_WALLS 1
-#define MAX_WALLS 20
+#define TARGET_WALL_COUNT 20
 
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
@@ -571,10 +571,11 @@ void BuildWorldShell(){
 
 
 void SetupWalls(){
-    float spawnChance;
+    float spawnChance, spawnChanceOffset;
     int x, z, height;
-    int wallRefs;
-    //////////int rnd;
+    int wallCount;
+
+    float totalWallsCreated = 0, totalCreationAttempts = 0;
 
     Wall *newWall;
 
@@ -591,8 +592,9 @@ void SetupWalls(){
     }
 
 
-    wallRefs = 4 * ((WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1));
-    spawnChance = (MAX_WALLS * 100) / wallRefs;
+    wallCount = ((WALL_COUNT_X - 1) * WALL_COUNT_Z) + (WALL_COUNT_X * (WALL_COUNT_Z - 1));
+    spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
+    printf("Spawn chance is: %f\n", spawnChance);
 
 
 
@@ -607,13 +609,23 @@ void SetupWalls(){
 
                 newWall->direction = none;
 
+                totalCreationAttempts++;
                 if(PercentChance(spawnChance)){
                     newWall->percentClosed = 100;
                     newWall->state = closed;
+                    totalWallsCreated++;
                 }
                 else{
                     newWall->percentClosed = 0;
                     newWall->state = open;
+                }
+
+                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
+                if(spawnChanceOffset > 0){
+                    spawnChanceOffset = spawnChanceOffset + 5;
+                }
+                else{
+                    spawnChanceOffset = spawnChanceOffset - 5;
                 }
 
                 nodes[x][z].north = newWall;
@@ -633,13 +645,23 @@ void SetupWalls(){
 
                 newWall->direction = none;
 
+                totalCreationAttempts++;
                 if(PercentChance(spawnChance)){
                     newWall->percentClosed = 100;
                     newWall->state = closed;
+                    totalWallsCreated++;
                 }
                 else{
                     newWall->percentClosed = 0;
                     newWall->state = open;
+                }
+
+                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
+                if(spawnChanceOffset > 0){
+                    spawnChanceOffset = spawnChanceOffset + 5;
+                }
+                else{
+                    spawnChanceOffset = spawnChanceOffset - 5;
                 }
 
                 nodes[x][z].south = newWall;
@@ -659,13 +681,23 @@ void SetupWalls(){
 
                 newWall->direction = none;
 
+                totalCreationAttempts++;
                 if(PercentChance(spawnChance)){
                     newWall->percentClosed = 100;
                     newWall->state = closed;
+                    totalWallsCreated++;
                 }
                 else{
                     newWall->percentClosed = 0;
                     newWall->state = open;
+                }
+
+                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
+                if(spawnChanceOffset > 0){
+                    spawnChanceOffset = spawnChanceOffset + 5;
+                }
+                else{
+                    spawnChanceOffset = spawnChanceOffset - 5;
                 }
 
 
@@ -685,14 +717,26 @@ void SetupWalls(){
 
                 newWall->direction = none;
 
-                if(PercentChance(spawnChance)){
+                totalCreationAttempts++;
+                if(PercentChance(spawnChance + spawnChanceOffset)){
                     newWall->percentClosed = 100;
                     newWall->state = closed;
+                    totalWallsCreated++;
                 }
                 else{
                     newWall->percentClosed = 0;
                     newWall->state = open;
                 }
+
+
+                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
+                if(spawnChanceOffset > 0){
+                    spawnChanceOffset = spawnChanceOffset + 5;
+                }
+                else{
+                    spawnChanceOffset = spawnChanceOffset - 5;
+                }
+
 
                 nodes[x][z].west = newWall;
 
@@ -798,13 +842,13 @@ void PlaceWalls(){
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             if(x == 0){
-                PlaceHorizontalWall(nodes[x][z].west,1, (WALL_LENGTH + 1) * (z + 1) );
+                PlaceHorizontalWall(nodes[x][z].west, 1, (WALL_LENGTH + 1) * (z + 1));
             }
             if(z == 0){
                 PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), 1);
             }
 
-            PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1) );
+            PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1));
             PlaceVerticalWall(nodes[x][z].south, (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1);
         }
     }
