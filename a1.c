@@ -11,6 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "graphics.h"
 
@@ -21,7 +22,7 @@
 ///
 #define CHANGE_WALLS_TIME 3000
 #define AUTO_CHANGE_WALLS 1
-#define TARGET_WALL_COUNT 20
+#define TARGET_WALL_COUNT 22
 
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
@@ -45,7 +46,7 @@ int totalWalls;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 0
+#define GRAVITY_ENABLED 1
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -79,6 +80,8 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
 void PlaceWalls();
 
 void ChangeWalls();
+int Node_WallCount();
+void SetWall(Wall **targetWall, Wall **adjacentWall);
 
 ///
 /// Utility forward delcarations
@@ -484,9 +487,9 @@ int main(int argc, char** argv)
         world[2][2][1] = 5;
         world[3][2][1] = 5;
         world[3][1][2] = 5;
-        //world[2][3][3] = 5;
+        world[2][3][3] = 5;
 
-        //world[2][3][2] = 5;
+        world[2][3][2] = 5;
 
 
 
@@ -795,7 +798,7 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
 void PlaceWalls(){
     int x, z;
 
-    printf("PLACE WALLS\n");
+    //printf("PLACE WALLS\n");
 
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
@@ -816,40 +819,76 @@ void PlaceWalls(){
 
 
 void ChangeWalls(){
-    int randomNode, randomWall, nodeCount;
+    int randomNode;
+    int nodeCount;
     int randX, randZ;
+    int x, z;
+
+    Node *currentNode;
+
+    bool walls[4];
+
+    int i;
 
 
+
+
+    ///
+    /// Pick a random node
+    ///
     nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
     randomNode = rand() % nodeCount + 1;
-    randomWall = rand() % 4;
 
     randX = randomNode / WALL_COUNT_X;
     randZ = randomNode % WALL_COUNT_X;
 
-    printf("X: %d, Z: %d, WALL: %d\n", randX, randZ, randomWall);
+    currentNode = nodes[randX, randZ];
 
-    Node *node = &(nodes[randX][randZ]);
-
-    if(randomWall == 0){
-        printf("North wall\n");
-        PlaceVerticalWall(node->north, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1));
-    }
-    else if(randomWall == 1){
-        printf("East wall\n");
-        PlaceVerticalWall(node->east, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1) + 1);
-    }
-    else if(randomWall == 2){
-        printf("South wall\n");
-        PlaceVerticalWall(node->south, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1));
-    }
-    else{
-        printf("West wall\n");
-        PlaceVerticalWall(node->west, (WALL_LENGTH + 1) * (randX + 1), (WALL_LENGTH + 1) * (randZ + 1) + 1);
-    }
+    ///
+    /// Pick a random open wall, and closed wall from that node
+    ///
+    walls[0] = currentNode->north != NULL;
+    walls[1] = currentNode->east != NULL;
+    walls[2] = currentNode->south != NULL;
+    walls[3] = currentNode->west != NULL;
 
 
+
+
+
+
+
+
+
+    PlaceWalls();
     glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+}
+
+int Node_WallCount(Node *node){
+    int count = 0;
+
+    if(node->north != NULL){
+        count++;
+    }
+
+    if(node->east != NULL){
+        count++;
+    }
+
+    if(node->south != NULL){
+        count++;
+    }
+
+    if(node->west != NULL){
+        count++;
+    }
+
+
+    return count;
+}
+
+void SetWall(Wall **targetWall, Wall **adjacentWall){
+
 }
 
 
