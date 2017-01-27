@@ -23,7 +23,7 @@
 #define CHANGE_WALLS_TIME 3000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
-#define MAX_WALL_COUNT 25
+#define MAX_WALL_COUNT 21
 
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
@@ -622,10 +622,19 @@ void SetupWalls(){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
             ///
+            /// Make sure a node never has more than 3 walls //TODO: I don't think this is a good way of doing this...
+            ///
+            if(  Node_WallCount( &(nodes[x][z]) )  > 2){
+                continue;
+            }
+
+            ///
             /// North wall
             ///
             if(z > 0){
-                SetupWall( &(nodes[x][z].north), &(nodes[x][z - 1].south), &genInfo);
+                if(Node_WallCount( &(nodes[x][z - 1]) )  < 3){
+                    SetupWall( &(nodes[x][z].north), &(nodes[x][z - 1].south), &genInfo);
+                }
             }
             else{
                 SetupWall( &(nodes[x][z].north), NULL, &genInfo);
@@ -636,7 +645,9 @@ void SetupWalls(){
             /// South wall
             ///
             if(z < WALL_COUNT_Z - 1){
-                SetupWall( &(nodes[x][z].south), &(nodes[x][z + 1].north), &genInfo);
+                if(Node_WallCount( &(nodes[x][z + 1]) )  < 3){
+                    SetupWall( &(nodes[x][z].south), &(nodes[x][z + 1].north), &genInfo);
+                }
             }
             else{
                 SetupWall( &(nodes[x][z].south), NULL, &genInfo);
@@ -647,7 +658,9 @@ void SetupWalls(){
             /// East Wall
             ///
             if(x < WALL_COUNT_X - 1){
-                SetupWall( &(nodes[x][z].east), &(nodes[x + 1][z].west), &genInfo);
+                if(Node_WallCount( &(nodes[x + 1][z]) )  < 3){
+                    SetupWall( &(nodes[x][z].east), &(nodes[x + 1][z].west), &genInfo);
+                }
             }
             else{
                 SetupWall( &(nodes[x][z].east), NULL, &genInfo);
@@ -658,7 +671,9 @@ void SetupWalls(){
             /// West Wall
             ///
             if(x > 0){
-                SetupWall( &(nodes[x][z].west), &(nodes[x - 1][z].east), &genInfo);
+                if(Node_WallCount( &(nodes[x - 1][z]) )  < 3){
+                    SetupWall( &(nodes[x][z].west), &(nodes[x - 1][z].east), &genInfo);
+                }
             }
             else{
                 SetupWall( &(nodes[x][z].west), NULL, &genInfo);
@@ -732,6 +747,7 @@ void ChangeWalls(){
     int randomNode;
     int nodeCount;
     int randX, randZ;
+    int randWall;
     int x, z;
 
     Node *currentNode;
@@ -755,12 +771,9 @@ void ChangeWalls(){
     currentNode = nodes[randX, randZ];
 
     ///
-    /// Pick a random open wall, and closed wall from that node
+    /// Pick a an open wall, and a closed wall
     ///
-    walls[0] = currentNode->north != NULL;
-    walls[1] = currentNode->east != NULL;
-    walls[2] = currentNode->south != NULL;
-    walls[3] = currentNode->west != NULL;
+
 
 
 
@@ -864,7 +877,8 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Randomly decide if the wall should be open or closed
     ///
-    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier) && genInfo->wallsCreated <= MAX_WALL_COUNT){
+
+    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier) && genInfo->wallsCreated < MAX_WALL_COUNT){
         newWall->percentClosed = 100;
         newWall->state = closed;
         genInfo->wallsCreated++;
@@ -875,6 +889,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
         newWall->percentClosed = 0;
         newWall->state = open;
     }
+    printf("wallsCreated: %d\n", genInfo->wallsCreated);
 
     ///
     /// Use the spawnChanceModifier to push the spawnChance
