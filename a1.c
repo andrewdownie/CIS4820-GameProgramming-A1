@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME 3000
+#define CHANGE_WALLS_TIME_MS 1000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -481,6 +481,7 @@ int main(int argc, char** argv)
         printf("Wall count: %d\n", CountAllWalls());
 
 
+
         ///Setup some cubes to climb up for testing
         world[0][2][1] = 5;
         world[0][3][1] = 5;
@@ -496,7 +497,7 @@ int main(int argc, char** argv)
 
 
         if(AUTO_CHANGE_WALLS == 1){
-            glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+            glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
         }
 
 
@@ -625,7 +626,7 @@ void SetupWalls(){
             /// Make sure a node never has more than 3 walls //TODO: I don't think this is a good way of doing this...
             ///
             if(  Node_WallCount( &(nodes[x][z]) )  > 2){
-                continue;
+            //    continue;
             }
 
             ///
@@ -744,19 +745,21 @@ void PlaceWalls(){
 
 
 void ChangeWalls(){
+    printf("Change walls meow...\n");
+
+    int randX, randZ;
     int randomNode;
     int nodeCount;
-    int randX, randZ;
-    int randWall;
-    int x, z;
 
+
+    Wall *openWalls[4], *closedWalls[4];
+    Wall *wallToClose, *wallToOpen;
     Node *currentNode;
 
-    bool walls[4];
 
+    int openWallCount = 0, closedWallCount = 0;
+    int randOpenWall, randClosedWall;
     int i;
-
-
 
 
     ///
@@ -770,9 +773,68 @@ void ChangeWalls(){
 
     currentNode = nodes[randX, randZ];
 
+
     ///
-    /// Pick a an open wall, and a closed wall
+    /// Figure out if each wall is open or closed
     ///
+    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+    if(currentNode->north->state == closed){
+        closedWalls[closedWallCount] = currentNode->north;
+        closedWallCount++;
+    }
+    else{
+        openWalls[openWallCount] = currentNode->north;
+        openWallCount++;
+    }
+
+    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+    if(currentNode->south->state == closed){
+        closedWalls[closedWallCount] = currentNode->south;
+        closedWallCount++;
+    }
+    else{
+        openWalls[openWallCount] = currentNode->south;
+        openWallCount++;
+    }
+
+    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+    if(currentNode->east->state == closed){
+        closedWalls[closedWallCount] = currentNode->east;
+        closedWallCount++;
+    }
+    else{
+        openWalls[openWallCount] = currentNode->east;
+        openWallCount++;
+    }
+
+    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+    if(currentNode->west->state == closed){
+        closedWalls[closedWallCount] = currentNode->west;
+        closedWallCount++;
+    }
+    else{
+        openWalls[openWallCount] = currentNode->west;
+        openWallCount++;
+    }
+
+
+
+    ///
+    /// Pick a random closed wall
+    ///
+    randClosedWall = rand() % closedWallCount;
+    //wallToOpen = closedWalls[randClosedWall];
+
+    printf("Open wall count: %d, wall to open: %d\n", closedWallCount, randClosedWall);
+
+    ///
+    /// Pick a random open wall
+    ///
+    randOpenWall = rand() % openWallCount;
+    //wallToClose = openWalls[randOpenWall];
+
+
+    printf("Open wall count: %d, wall to open: %d\n", openWallCount, randOpenWall);
 
 
 
@@ -783,8 +845,12 @@ void ChangeWalls(){
 
 
 
-    PlaceWalls();
-    glutTimerFunc(CHANGE_WALLS_TIME, ChangeWalls, CHANGE_WALLS_TIME);
+
+
+
+
+    //PlaceWalls();
+    glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
 }
 
 int Node_WallCount(Node *node){
@@ -889,7 +955,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
         newWall->percentClosed = 0;
         newWall->state = open;
     }
-    printf("wallsCreated: %d\n", genInfo->wallsCreated);
+    //printf("wallsCreated: %d\n", genInfo->wallsCreated);
 
     ///
     /// Use the spawnChanceModifier to push the spawnChance
