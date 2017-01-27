@@ -852,12 +852,24 @@ int Node_WallCount(Node *node){
 
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
-    /// Make sure we're not going to spawn a wall where a wall exits already
+    /// Error checking
     ///
-    if(targetWall == NULL || *targetWall != NULL){
-        printf("INVALID SETUPWALL, QUITTING MEOW\n");
+    if(targetWall == NULL){
+        printf("ERROR!: pointer to wall pointer was null\n");
         return;
     }
+
+    ///
+    /// Make sure we're not going to spawn a wall where a wall exits already
+    ///
+    if(*targetWall != NULL){
+        printf("DEBUG: this wall has already been set.\n");
+    //    return;
+    }
+
+
+    //printf("Target wall info: %f\n", (*targetWall)->percentClosed);
+
 
     ///
     /// Malloc the new wall
@@ -870,7 +882,8 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Randomly decide if the wall should be open or closed
     ///
-    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier)){
+    //if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier)){
+    if(PercentChance(100)){
         newWall->percentClosed = 100;
         newWall->state = closed;
         genInfo->wallsCreated++;
@@ -895,7 +908,11 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     /// Assign the new wall
     ///
     *targetWall = newWall;
-    if(adjacentWall != NULL && *adjacentWall != NULL){
+
+    printf("Trying out *targetWall\n");
+    printf("%f\n", (*targetWall)->percentClosed);
+
+    if(adjacentWall != NULL){
         *adjacentWall = newWall;
     }
 
