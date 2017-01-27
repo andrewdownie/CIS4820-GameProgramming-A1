@@ -55,8 +55,8 @@ typedef struct _Node{
 } Node;
 
 typedef struct _GenerationInfo{
-    int spawnChanceModifier;
-    int spawnChance;
+    float spawnChanceModifier;
+    float spawnChance;
 
     int creationAttempts;
     int wallsCreated;
