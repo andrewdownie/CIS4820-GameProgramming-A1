@@ -637,7 +637,7 @@ void SetupWalls(){
             /// South wall
             ///
             if(z < WALL_COUNT_Z - 1){
-                SetupWall( &(nodes[x][z].south), &(nodes[x][z].north), &genInfo);
+                SetupWall( &(nodes[x][z].south), &(nodes[x][z + 1].north), &genInfo);
             }
             else{
                 SetupWall( &(nodes[x][z].south), NULL, &genInfo);
@@ -648,7 +648,7 @@ void SetupWalls(){
             /// East Wall
             ///
             if(x < WALL_COUNT_X - 1){
-                SetupWall( &(nodes[x][z].east), &(nodes[x][z].west), &genInfo);
+                SetupWall( &(nodes[x][z].east), &(nodes[x + 1][z].west), &genInfo);
             }
             else{
                 SetupWall( &(nodes[x][z].east), NULL, &genInfo);
@@ -659,7 +659,7 @@ void SetupWalls(){
             /// West Wall
             ///
             if(x > 0){
-                SetupWall( &(nodes[x][z].west), &(nodes[x][z].east), &genInfo);
+                SetupWall( &(nodes[x][z].west), &(nodes[x - 1][z].east), &genInfo);
             }
             else{
                 SetupWall( &(nodes[x][z].west), NULL, &genInfo);
@@ -814,10 +814,11 @@ int CountAllWalls(){
                 count++;
             }
 
-            if(currentNode->east->state = closed){
+            if(currentNode->east->state == closed){
                 count++;
             }
-            if(currentNode->south->state = closed){
+
+            if(currentNode->south->state == closed){
                 count++;
             }
         }
@@ -956,7 +957,7 @@ void PrintWallGeneration(){
             putchar(' ');
 
 
-            if(nodes[x][z].north->percentClosed == 100){
+            if(nodes[x][z].north->state == closed){
                 putchar('|');
             }
             else{
@@ -967,14 +968,14 @@ void PrintWallGeneration(){
         putchar('\n');
 
         for(x = 0; x < WALL_COUNT_X - 1; x++){
-            if(nodes[x][z].west->percentClosed == 100){
+            if(nodes[x][z].west->state == closed){
                 putchar('-');
             }
             else{
                 putchar(' ');
             }
             putchar('+');
-            if(nodes[x][z].east->percentClosed == 100){
+            if(nodes[x][z].east->state == closed){
                 putchar('-');
             }
             else{
@@ -985,7 +986,7 @@ void PrintWallGeneration(){
 
         for(x = 0; x < WALL_COUNT_X - 1; x++){
             putchar(' ');
-            if(nodes[x][z].south->percentClosed == 100){
+            if(nodes[x][z].south->state == closed){
                 putchar('|');
             }
             else{
