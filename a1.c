@@ -22,7 +22,8 @@
 ///
 #define CHANGE_WALLS_TIME 3000
 #define AUTO_CHANGE_WALLS 1
-#define TARGET_WALL_COUNT 22
+#define TARGET_WALL_COUNT 25
+#define MAX_WALL_COUNT 25
 
 #define OUTER_WALL_COLOR 7
 #define WALL_COLOUR 1
@@ -617,7 +618,7 @@ void SetupWalls(){
 
 
 
-    for(x = 0; x < WALL_COUNT_X - 1; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
+    for(x = 0; x < WALL_COUNT_X - 1; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall) -> seems to work...
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
             ///
@@ -796,6 +797,8 @@ int Node_WallCount(Node *node){
     return count;
 }
 
+
+
 int CountAllWalls(){
     int count = 0, x, z;
     Node *currentNode;
@@ -825,6 +828,8 @@ int CountAllWalls(){
     return count;
 }
 
+
+
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     float currentSpawnPercentage;
 
@@ -837,11 +842,15 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     }
 
     ///
-    /// Make sure we're not going to spawn a wall where a wall exits already
+    /// Make sure we're not going to spawn a wall where a wall exists already
     ///
     if(*targetWall != NULL){
         return;
     }
+
+
+
+
 
 
     ///
@@ -855,11 +864,12 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Randomly decide if the wall should be open or closed
     ///
-    //    printf("THIS WALLS CHANCE %f\n",  genInfo->spawnChance);
-    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier)){
+    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier) && genInfo->wallsCreated <= MAX_WALL_COUNT){
         newWall->percentClosed = 100;
         newWall->state = closed;
         genInfo->wallsCreated++;
+
+        printf("Walls created %d\n", genInfo->wallsCreated);
     }
     else{
         newWall->percentClosed = 0;
@@ -869,15 +879,11 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Use the spawnChanceModifier to push the spawnChance
     ///         towards spawning the target number of walls
-    currentSpawnPercentage = (100 * (float)(genInfo->wallsCreated / genInfo->creationAttempts));//TODO: why is this always zero?
-    printf("SPAWN CHANCE MODIFIER: %f, %f\n", currentSpawnPercentage, genInfo->spawnChanceModifier);
+    currentSpawnPercentage = (100 * ((float)genInfo->wallsCreated / (float)genInfo->creationAttempts));
+    genInfo->spawnChanceModifier = genInfo->spawnChance - currentSpawnPercentage;
 
-    if(currentSpawnPercentage > genInfo->spawnChance){
-        genInfo->spawnChanceModifier = -5;
-    }
-    else{
-        genInfo->spawnChanceModifier = 5;
-    }
+    //printf("SPAWN CHANCE MODIFIER: %f, %f\n", currentSpawnPercentage, genInfo->spawnChanceModifier);
+
 
 
 
@@ -890,6 +896,8 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
         *adjacentWall = newWall;
     }
 }
+
+
 
 
 /////
