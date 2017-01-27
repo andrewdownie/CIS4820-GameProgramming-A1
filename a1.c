@@ -81,7 +81,7 @@ void PlaceWalls();
 
 void ChangeWalls();
 int Node_WallCount();
-void SetWall(Wall **targetWall, Wall **adjacentWall);
+void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
 
 ///
 /// Utility forward delcarations
@@ -588,6 +588,15 @@ void SetupWalls(){
     float totalWallsCreated = 0, totalCreationAttempts = 0;
 
     Wall *newWall;
+    Wall *targetWall, *adjacentWall;
+
+    GenerationInfo genInfo;
+    genInfo.spawnChanceModifier = 0;
+    genInfo.spawnChance = 0;
+
+    genInfo.creationAttempts = 0;
+    genInfo.wallsCreated = 0;
+
 
     ///
     /// Set nodes to null
@@ -604,6 +613,7 @@ void SetupWalls(){
 
     wallCount = ((WALL_COUNT_X - 1) * WALL_COUNT_Z) + (WALL_COUNT_X * (WALL_COUNT_Z - 1));
     spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
+    genInfo.spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
     printf("Spawn chance is: %f\n", spawnChance);
 
 
@@ -614,73 +624,26 @@ void SetupWalls(){
             ///
             /// North wall
             ///
-            if(nodes[x][z].north == NULL){
-                newWall = (Wall*)malloc(sizeof(Wall));
-
-                newWall->direction = none;
-
-                totalCreationAttempts++;
-                if(PercentChance(spawnChance)){
-                    newWall->percentClosed = 100;
-                    newWall->state = closed;
-                    totalWallsCreated++;
-                }
-                else{
-                    newWall->percentClosed = 0;
-                    newWall->state = open;
-                }
-
-                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
-                if(spawnChanceOffset > 0){
-                    spawnChanceOffset = spawnChanceOffset + 5;
-                }
-                else{
-                    spawnChanceOffset = spawnChanceOffset - 5;
-                }
-
-                nodes[x][z].north = newWall;
-                //printf("Set north wall of %d, %d\n", x, z);
-
-                if(z > 0){
-                    nodes[x][z - 1].south = newWall;
-                }
-
+            if(z > 0){
+                SetupWall( &(nodes[x][z].north), &(nodes[x][z - 1].south), &genInfo);
             }
+            else{
+                SetupWall( &(nodes[x][z].north), NULL, &genInfo);
+            }
+
+
 
             ///
             /// South wall
             ///
-            if(nodes[x][z].south == NULL){
-                newWall = (Wall*)malloc(sizeof(Wall));
-
-                newWall->direction = none;
-
-                totalCreationAttempts++;
-                if(PercentChance(spawnChance)){
-                    newWall->percentClosed = 100;
-                    newWall->state = closed;
-                    totalWallsCreated++;
-                }
-                else{
-                    newWall->percentClosed = 0;
-                    newWall->state = open;
-                }
-
-                spawnChanceOffset = (totalWallsCreated / totalCreationAttempts) - spawnChance;
-                if(spawnChanceOffset > 0){
-                    spawnChanceOffset = spawnChanceOffset + 5;
-                }
-                else{
-                    spawnChanceOffset = spawnChanceOffset - 5;
-                }
-
-                nodes[x][z].south = newWall;
-
-                if(z < WALL_COUNT_Z + 1){
-                    nodes[x][z + 1].north = newWall;
-                }
-
+            if(z < WALL_COUNT_Z + 1){
+                SetupWall( &(nodes[x][z].south), &(nodes[x][z].north), &genInfo);
             }
+            else{
+                SetupWall( &(nodes[x][z].south), NULL, &genInfo);
+            }
+
+
 
 
             ///
@@ -887,7 +850,55 @@ int Node_WallCount(Node *node){
     return count;
 }
 
-void SetWall(Wall **targetWall, Wall **adjacentWall){
+void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
+    ///
+    /// Make sure we're not going to spawn a wall where a wall exits already
+    ///
+    if(targetWall == NULL || *targetWall != NULL){
+        printf("INVALID SETUPWALL, QUITTING MEOW\n");
+        return;
+    }
+
+    ///
+    /// Malloc the new wall
+    ///
+    Wall *newWall = (Wall*)malloc(sizeof(Wall));
+    newWall->direction = none;
+    genInfo->creationAttempts++;
+
+
+    ///
+    /// Randomly decide if the wall should be open or closed
+    ///
+    if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier)){
+        newWall->percentClosed = 100;
+        newWall->state = closed;
+        genInfo->wallsCreated++;
+    }
+    else{
+        newWall->percentClosed = 0;
+        newWall->state = open;
+    }
+
+    ///
+    /// Use the spawnChanceModifier to push the spawnChance
+    ///         towards spawning the target number of walls
+    genInfo->spawnChanceModifier = (genInfo->wallsCreated / genInfo->creationAttempts) - genInfo->spawnChance;
+    if(genInfo->spawnChanceModifier > 0){
+        genInfo->spawnChanceModifier += 5;
+    }
+    else{
+        genInfo->spawnChanceModifier -= 5;
+    }
+
+    ///
+    /// Assign the new wall
+    ///
+    *targetWall = newWall;
+    if(adjacentWall != NULL && *adjacentWall != NULL){
+        *adjacentWall = newWall;
+    }
+
 
 }
 

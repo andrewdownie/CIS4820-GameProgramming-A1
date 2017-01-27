@@ -19,13 +19,13 @@ GLubyte  world[WORLDX][WORLDY][WORLDZ];
 
 #define MAX_DISPLAY_LIST 500000
 
-typedef struct V3 {
+typedef struct V3 { //TODO: DELETE THIS
     float x;
     float y;
     float z;
 } Vector3;
 
-typedef struct I3 {
+typedef struct I3 {//TODO: DELETE THIS
     int x;
     int y;
     int z;
@@ -53,3 +53,12 @@ typedef struct _Wall{
 typedef struct _Node{
     Wall *north, *south, *east, *west;
 } Node;
+
+typedef struct _GenerationInfo{
+    int spawnChanceModifier;
+    int spawnChance;
+
+    int creationAttempts;
+    int wallsCreated;
+
+} GenerationInfo;
