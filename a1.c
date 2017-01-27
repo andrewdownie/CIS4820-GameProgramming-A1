@@ -582,21 +582,22 @@ void BuildWorldShell(){
 
 
 void SetupWalls(){
-    float spawnChance, spawnChanceOffset;
-    int x, z, height;
     int wallCount;
+    int x, z;
 
-    float totalWallsCreated = 0, totalCreationAttempts = 0;
-
-    Wall *newWall;
     Wall *targetWall, *adjacentWall;
-
     GenerationInfo genInfo;
+
+
     genInfo.spawnChanceModifier = 0;
     genInfo.spawnChance = 0;
 
     genInfo.creationAttempts = 0;
     genInfo.wallsCreated = 0;
+
+    wallCount = ((WALL_COUNT_X - 1) * WALL_COUNT_Z) + (WALL_COUNT_X * (WALL_COUNT_Z - 1));
+    genInfo.spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
+    //printf("Spawn chance is: %f\n", genInfo.spawnChanceModifier);
 
 
     ///
@@ -612,15 +613,12 @@ void SetupWalls(){
     }
 
 
-    wallCount = ((WALL_COUNT_X - 1) * WALL_COUNT_Z) + (WALL_COUNT_X * (WALL_COUNT_Z - 1));
-    spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
-    genInfo.spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
-    printf("Spawn chance is: %f\n", genInfo.spawnChanceModifier);
 
 
 
-    for(x = 0; x < WALL_COUNT_X; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
-        for(z = 0; z < WALL_COUNT_Z; z++){
+
+    for(x = 0; x < WALL_COUNT_X - 1; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall)
+        for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
             ///
             /// North wall
@@ -828,6 +826,8 @@ int CountAllWalls(){
 }
 
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
+    float currentSpawnPercentage;
+
     ///
     /// Error checking
     ///
@@ -869,8 +869,16 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Use the spawnChanceModifier to push the spawnChance
     ///         towards spawning the target number of walls
-    //genInfo->spawnChanceModifier = (100 * (float)(genInfo->wallsCreated / genInfo->creationAttempts)) - genInfo->spawnChance;
-    printf("SPAWN CHANCE MODIFIER: %f\n", genInfo->spawnChanceModifier);
+    currentSpawnPercentage = (100 * (float)(genInfo->wallsCreated / genInfo->creationAttempts));//TODO: why is this always zero?
+    printf("SPAWN CHANCE MODIFIER: %f, %f\n", currentSpawnPercentage, genInfo->spawnChanceModifier);
+
+    if(currentSpawnPercentage > genInfo->spawnChance){
+        genInfo->spawnChanceModifier = -5;
+    }
+    else{
+        genInfo->spawnChanceModifier = 5;
+    }
+
 
 
     ///
