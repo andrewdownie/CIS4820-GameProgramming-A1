@@ -869,7 +869,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
         newWall->state = closed;
         genInfo->wallsCreated++;
 
-        printf("Walls created %d\n", genInfo->wallsCreated);
+        //printf("Walls created %d\n", genInfo->wallsCreated);
     }
     else{
         newWall->percentClosed = 0;
