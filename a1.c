@@ -63,6 +63,8 @@ int totalWalls;
 /// Delta Time
 ///
 int lastGravityTime;
+int lastUpdateTime;
+int lastWallChangeTime;
 
 ///
 /// Nodes and Walls
@@ -80,9 +82,9 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
 void ChangeWalls();
 void SetupWalls();
 
-void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
-void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
-void PlaceWalls();
+void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
+void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
+void PlaceWalls(int deltaTime);
 
 
 
@@ -381,11 +383,29 @@ void update() {
 
 
     } else {//////////////////////////// LOGIC GOES HERE
+        int currentElapsedTime, deltaWallChangeTime;
+
+        if(AUTO_CHANGE_WALLS){
+            currentElapsedTime = glutGet(GLUT_ELAPSED_TIME);
+            deltaWallChangeTime = currentElapsedTime - lastUpdateTime;
+
+            lastWallChangeTime += deltaWallChangeTime;
+
+            if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
+                lastWallChangeTime -= CHANGE_WALLS_TIME_MS;
+                ChangeWalls();
+
+            }
+
+            PlaceWalls(deltaWallChangeTime);
+
+
+            lastUpdateTime = glutGet(GLUT_ELAPSED_TIME);
+        }
+
 
 
         collisionResponse();
-
-
     }
 }
 
@@ -480,16 +500,21 @@ int main(int argc, char** argv)
         MAP_SIZE_X = (WALL_COUNT_X * WALL_LENGTH) + WALL_COUNT_X + 2;
         MAP_SIZE_Z = (WALL_COUNT_Z * WALL_LENGTH) + WALL_COUNT_Z + 2;
 
+
+        ///
+        /// Build the initial world
+        ///
         BuildWorldShell();
         SetupWalls();
         PrintWallGeneration();
-        PlaceWalls();
+        PlaceWalls(0);
 
         printf("Wall count: %d\n", CountAllWalls());
 
 
-
-        ///Setup some cubes to climb up for testing
+        ///
+        /// Setup some cubes to climb up for testing
+        ///
         world[0][2][1] = 5;
         world[0][3][1] = 5;
 
@@ -497,20 +522,8 @@ int main(int argc, char** argv)
         world[2][2][1] = 5;
         world[3][2][1] = 5;
         world[3][1][2] = 5;
-        world[2][3][3] = 5;
-
-        world[2][3][2] = 5;
-
-
-
-        if(AUTO_CHANGE_WALLS == 1){
-            glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
-        }
-
-
-
         /* create sample player */
-        createPlayer(0, 52.0, 1.0, 52.0, 0.0);
+        //createPlayer(0, 52.0, 1.0, 52.0, 0.0);
 
 
 
@@ -622,10 +635,6 @@ void SetupWalls(){
     }
 
 
-
-
-
-
     for(x = 0; x < WALL_COUNT_X - 1; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall) -> seems to work...
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
@@ -696,9 +705,14 @@ void SetupWalls(){
 
 }
 
-void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
+void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     int actualWallLength;
     int yOffset, z;
+    int deltaPercent;
+
+    if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
+        //return;
+    }
 
 
     ///
@@ -712,6 +726,30 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
 
     }
 
+
+    ///
+    /// Update the wall using deltaTime
+    ///
+    deltaPercent = ((float)CHANGE_WALLS_TIME_MS * deltaTime) / (float)WALL_COUNT_X  / 1000;
+    if(wall->state == opening){
+        wall->percentClosed -= deltaPercent;
+        if(wall->percentClosed < 0){
+            wall->percentClosed = 0;
+            wall->state = open;
+        }
+    }
+    else if(wall->state == closing){
+        wall->percentClosed += deltaPercent;
+        if(wall->percentClosed > 100){
+            wall->percentClosed = 100;
+            wall->state = closed;
+        }
+    }
+
+
+    ///
+    /// Place the wall
+    ///
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(z = 0; z < actualWallLength; z++){
 
@@ -723,9 +761,14 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
 
 }
 
-void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
+void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     int actualWallLength;
     int yOffset, x;
+    float deltaPercent;
+
+    if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
+        //return;
+    }
 
     ///
     /// Clear the wall first
@@ -739,6 +782,30 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
     }
 
 
+
+    ///
+    /// Update the wall using deltaTime
+    ///
+    deltaPercent = ((float)CHANGE_WALLS_TIME_MS * deltaTime) / (float)WALL_COUNT_X  / 1000;
+    if(wall->state == opening){
+        wall->percentClosed -= deltaPercent;
+        if(wall->percentClosed <= 0){
+            wall->percentClosed = 0;
+            wall->state = open;
+        }
+    }
+    else if(wall->state == closing){
+        wall->percentClosed += deltaPercent;
+        if(wall->percentClosed > 100){
+            wall->percentClosed = 100;
+            wall->state = closed;
+        }
+    }
+
+
+    ///
+    /// Place the wall
+    ///
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(x = 0; x < actualWallLength; x++){
 
@@ -750,7 +817,7 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
 
 }
 
-void PlaceWalls(){
+void PlaceWalls(int deltaTime){
     int x, z;
 
     //printf("PLACE WALLS\n");
@@ -758,14 +825,14 @@ void PlaceWalls(){
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             if(x == 0){
-                PlaceHorizontalWall(nodes[x][z].west, 1, (WALL_LENGTH + 1) * (z + 1));
+                PlaceHorizontalWall(nodes[x][z].west, 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
             }
             if(z == 0){
-                PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), 1);
+                PlaceVerticalWall(nodes[x][z].north, (WALL_LENGTH + 1) * (x + 1), 1, deltaTime);
             }
 
-            PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1));
-            PlaceVerticalWall(nodes[x][z].south, (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1);
+            PlaceHorizontalWall(nodes[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
+            PlaceVerticalWall(nodes[x][z].south, (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1, deltaTime);
         }
     }
 
@@ -964,41 +1031,37 @@ void ChangeWalls(){
     wallToClose = openWalls[randOpenWall];
     adjacentWallToClose = adjacentOpenWalls[randOpenWall];
 
-    printf("--Start moving walls--\n");
+    //printf("--Start moving walls--\n");
 
-    printf("---- wall to open\n");
-    wallToOpen->percentClosed = 0;
-    wallToOpen->state = open;
+    //printf("---- wall to open\n");
+    //wallToOpen->percentClosed = 0;
+    wallToOpen->state = opening;
 
     if(adjacentWallToOpen != NULL){
         adjacentWallToOpen->percentClosed = 0;
-        adjacentWallToOpen->state = open;
+        adjacentWallToOpen->state = opening;
     }
     else{
         printf("Adjacent wall to open was null\n");
     }
 
-    printf("---- wall to close\n");
-    wallToClose->percentClosed = 100;
-    wallToClose->state = closed;
-    printf("---- wall to close 2\n");
+    //printf("---- wall to close\n");
+    //wallToClose->percentClosed = 100;
+    wallToClose->state = closing;
+    //printf("---- wall to close 2\n");
 
     if(adjacentWallToClose != NULL){
-        printf("---- wall to close 3\n");
-        adjacentWallToClose->percentClosed = 100;
-        adjacentWallToClose->state = closed;
-        printf("---- wall to close 4\n");
+        //printf("---- wall to close 3\n");
+        //adjacentWallToClose->percentClosed = 100;
+        adjacentWallToClose->state = closing;
+        //printf("---- wall to close 4\n");
     }
     else{
-        printf("Adjacent wall to close was null\n");
+        //printf("Adjacent wall to close was null\n");
     }
 
     printf("\t walls remaining: %d\n", CountAllWalls());
 
-
-
-    PlaceWalls();
-    glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
 }
 
 
