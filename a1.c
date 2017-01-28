@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 500
+#define CHANGE_WALLS_TIME_MS 30
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -760,7 +760,11 @@ void ChangeWalls(){
 
 
     Wall *openWalls[4], *closedWalls[4];
+    Wall *adjacentOpenWalls[4], *adjacentClosedWalls[4];
+
     Wall *wallToClose, *wallToOpen;
+    Wall *adjacentWallToClose, *adjacentWallToOpen;
+
     Node *currentNode;
 
 
@@ -769,11 +773,12 @@ void ChangeWalls(){
     int i;
 
 
-    ///
-    /// Pick a random node
-    ///
+
     nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
 
+    ///
+    /// Pick a random node, and make sure it has walls that can be moved
+    ///
     while(1){
         randomNode = rand() % nodeCount + 1;
 
@@ -798,12 +803,34 @@ void ChangeWalls(){
     ///
     /// Figure out if each wall is open or closed
     ///
+    wallToOpen = NULL;
+    wallToClose = NULL;
+    adjacentWallToOpen = NULL;
+    adjacentWallToClose = NULL;
+
+
     if(currentNode->north->state == closed){
         closedWalls[closedWallCount] = currentNode->north;
+
+        if(randZ > 0){
+            adjacentClosedWalls[closedWallCount] = nodes[randX][randZ - 1].south;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->north;
+
+        if(randZ > 0){
+            adjacentOpenWalls[openWallCount] = nodes[randX][randZ - 1].south;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         openWallCount++;
     }
 
@@ -811,10 +838,26 @@ void ChangeWalls(){
 
     if(currentNode->south->state == closed){
         closedWalls[closedWallCount] = currentNode->south;
+
+        if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the nodes -1, and then index 0 right?
+            adjacentClosedWalls[closedWallCount] = nodes[randX][randZ + 1].north;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->south;
+
+        if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the nodes -1, and then index 0 right?
+            adjacentOpenWalls[openWallCount] = nodes[randX][randZ + 1].north;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         openWallCount++;
     }
 
@@ -822,19 +865,51 @@ void ChangeWalls(){
 
     if(currentNode->east->state == closed){
         closedWalls[closedWallCount] = currentNode->east;
+
+        if(randX < WALL_COUNT_X - 2){
+            adjacentClosedWalls[closedWallCount] = nodes[randX + 1][randZ].west;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->east;
+
+        if(randX < WALL_COUNT_X - 2){
+            adjacentOpenWalls[openWallCount] = nodes[randX + 1][randZ].west;
+        }
+        else{
+            adjacentOpenWalls[openWallCount] = NULL;
+        }
+
         openWallCount++;
     }
 
     if(currentNode->west->state == closed){
         closedWalls[closedWallCount] = currentNode->west;
+
+        if(randX > 0){
+            adjacentClosedWalls[closedWallCount] = nodes[randX - 1][randZ].east;
+        }
+        else{
+            adjacentClosedWalls[closedWallCount] = NULL;
+        }
+
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->west;
+
+        if(randX > 0){
+            adjacentOpenWalls[openWallCount] = nodes[randX - 1][randZ].east;
+        }
+        else{
+            adjacentOpenWalls[openWallCount] = NULL;
+        }
+
         openWallCount++;
     }
 
@@ -850,7 +925,8 @@ void ChangeWalls(){
         printf("ERROR!: this node has four open walls--------------------\n");
     }
 
-    //wallToOpen = closedWalls[randClosedWall];
+    wallToOpen = closedWalls[randClosedWall];
+    adjacentWallToOpen = adjacentClosedWalls[randClosedWall];
 
 
     ///
@@ -863,16 +939,43 @@ void ChangeWalls(){
         printf("ERROR!: this node has four closed walls--------------------\n");
     }
 
-    //wallToClose = openWalls[randOpenWall];
+    wallToClose = openWalls[randOpenWall];
+    adjacentWallToClose = adjacentOpenWalls[randOpenWall];
 
-    ///set the current wall to close
-    ///set the current wall to open
+    printf("--Start moving walls--\n");
+
+    printf("---- wall to open\n");
+    wallToOpen->percentClosed = 0;
+    wallToOpen->state = open;
+
+    if(adjacentWallToOpen != NULL){
+        adjacentWallToOpen->percentClosed = 0;
+        adjacentWallToOpen->state = open;
+    }
+    else{
+        printf("Adjacent wall to open was null\n");
+    }
+
+    printf("---- wall to close\n");
+    wallToClose->percentClosed = 100;
+    wallToClose->state = closed;
+    printf("---- wall to close 2\n");
+
+    if(adjacentWallToClose != NULL){
+        printf("---- wall to close 3\n");
+        adjacentWallToClose->percentClosed = 100;
+        adjacentWallToClose->state = closed;
+        printf("---- wall to close 4\n");
+    }
+    else{
+        printf("Adjacent wall to close was null\n");
+    }
+
+    printf("\t walls remaining: %d\n", CountAllWalls());
 
 
 
-
-
-    PlaceWalls();
+    //PlaceWalls();
     glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
 }
 
