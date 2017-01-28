@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 1000
+#define CHANGE_WALLS_TIME_MS 500
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -74,16 +74,19 @@ Node nodes[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 ///
 ///Extension forward declarations
 ///
-void SetupWalls();
 void BuildWorldShell();
-void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
+
+void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
+void ChangeWalls();
+void SetupWalls();
+
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ);
+void PlaceVerticalWall(Wall *wall, int wallX, int wallZ);
 void PlaceWalls();
 
-void ChangeWalls();
-int Node_WallCount();
-int CountAllWalls();
-void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
+
+
+
 
 
 ///
@@ -95,6 +98,10 @@ int PercentChance(float chance);
 
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
+
+int Node_WallCount();
+int CountAllWalls();
+
 void PrintWallGeneration();
 
 
@@ -633,7 +640,7 @@ void SetupWalls(){
             /// North wall
             ///
             if(z > 0){
-                if(Node_WallCount( &(nodes[x][z - 1]) )  < 3){
+                if(Node_WallCount( &(nodes[x][z - 1]) ) < 3){
                     SetupWall( &(nodes[x][z].north), &(nodes[x][z - 1].south), &genInfo);
                 }
             }
@@ -645,8 +652,8 @@ void SetupWalls(){
             ///
             /// South wall
             ///
-            if(z < WALL_COUNT_Z - 1){
-                if(Node_WallCount( &(nodes[x][z + 1]) )  < 3){
+            if(z < WALL_COUNT_Z){
+                if(Node_WallCount( &(nodes[x][z + 1]) ) < 3){
                     SetupWall( &(nodes[x][z].south), &(nodes[x][z + 1].north), &genInfo);
                 }
             }
@@ -659,7 +666,7 @@ void SetupWalls(){
             /// East Wall
             ///
             if(x < WALL_COUNT_X - 1){
-                if(Node_WallCount( &(nodes[x + 1][z]) )  < 3){
+                if(Node_WallCount( &(nodes[x + 1][z]) ) < 3){
                     SetupWall( &(nodes[x][z].east), &(nodes[x + 1][z].west), &genInfo);
                 }
             }
@@ -672,7 +679,7 @@ void SetupWalls(){
             /// West Wall
             ///
             if(x > 0){
-                if(Node_WallCount( &(nodes[x - 1][z]) )  < 3){
+                if(Node_WallCount( &(nodes[x - 1][z]) ) < 3){
                     SetupWall( &(nodes[x][z].west), &(nodes[x - 1][z].east), &genInfo);
                 }
             }
@@ -766,18 +773,31 @@ void ChangeWalls(){
     /// Pick a random node
     ///
     nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
-    randomNode = rand() % nodeCount + 1;
 
-    randX = randomNode / WALL_COUNT_X;
-    randZ = randomNode % WALL_COUNT_X;
+    while(1){
+        randomNode = rand() % nodeCount + 1;
 
-    currentNode = nodes[randX, randZ];
+        randX = randomNode / WALL_COUNT_X;
+        randZ = randomNode % WALL_COUNT_X;
+
+        if(randZ >= WALL_COUNT_Z - 1){
+            randZ--;
+        }
+
+        currentNode = &(nodes[randX][randZ]);
+
+        if(Node_WallCount(currentNode) != 0 && Node_WallCount(currentNode) != 4){
+            break;
+        }
+
+        //printf("Generate new current node: %d, %d-%d %f\n", Node_WallCount(currentNode), randX, randZ, currentNode->north->percentClosed);
+    }
+
 
 
     ///
     /// Figure out if each wall is open or closed
     ///
-    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
     if(currentNode->north->state == closed){
         closedWalls[closedWallCount] = currentNode->north;
         closedWallCount++;
@@ -787,7 +807,8 @@ void ChangeWalls(){
         openWallCount++;
     }
 
-    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+
+
     if(currentNode->south->state == closed){
         closedWalls[closedWallCount] = currentNode->south;
         closedWallCount++;
@@ -797,7 +818,8 @@ void ChangeWalls(){
         openWallCount++;
     }
 
-    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
+
+
     if(currentNode->east->state == closed){
         closedWalls[closedWallCount] = currentNode->east;
         closedWallCount++;
@@ -807,7 +829,6 @@ void ChangeWalls(){
         openWallCount++;
     }
 
-    printf("\topen%d, closed%d\n", openWallCount, closedWallCount);
     if(currentNode->west->state == closed){
         closedWalls[closedWallCount] = currentNode->west;
         closedWallCount++;
@@ -822,90 +843,39 @@ void ChangeWalls(){
     ///
     /// Pick a random closed wall
     ///
-    randClosedWall = rand() % closedWallCount;
+    if(closedWallCount > 0){
+        randClosedWall = rand() % closedWallCount;
+    }
+    else{
+        printf("ERROR!: this node has four open walls--------------------\n");
+    }
+
     //wallToOpen = closedWalls[randClosedWall];
 
-    printf("Open wall count: %d, wall to open: %d\n", closedWallCount, randClosedWall);
 
     ///
     /// Pick a random open wall
     ///
-    randOpenWall = rand() % openWallCount;
+    if(openWallCount > 0){
+        randOpenWall = rand() % openWallCount;
+    }
+    else{
+        printf("ERROR!: this node has four closed walls--------------------\n");
+    }
+
     //wallToClose = openWalls[randOpenWall];
 
-
-    printf("Open wall count: %d, wall to open: %d\n", openWallCount, randOpenWall);
-
-
+    ///set the current wall to close
+    ///set the current wall to open
 
 
 
 
 
-
-
-
-
-
-
-
-    //PlaceWalls();
+    PlaceWalls();
     glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
 }
 
-int Node_WallCount(Node *node){
-    int count = 0;
-
-    if(node->north != NULL){
-        count++;
-    }
-
-    if(node->east != NULL){
-        count++;
-    }
-
-    if(node->south != NULL){
-        count++;
-    }
-
-    if(node->west != NULL){
-        count++;
-    }
-
-
-    return count;
-}
-
-
-
-int CountAllWalls(){
-    int count = 0, x, z;
-    Node *currentNode;
-
-    for(x = 0; x < WALL_COUNT_X - 1; x++){
-        for(z = 0; z < WALL_COUNT_Z - 1; z++){
-            currentNode = &(nodes[x][z]);
-
-            if(x == 0 && currentNode->west->state == closed){
-                count++;
-            }
-
-            if(z == 0 && currentNode->north->state == closed){
-                count++;
-            }
-
-            if(currentNode->east->state == closed){
-                count++;
-            }
-
-            if(currentNode->south->state == closed){
-                count++;
-            }
-        }
-    }
-
-    return count;
-}
 
 
 
@@ -928,10 +898,6 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     }
 
 
-
-
-
-
     ///
     /// Malloc the new wall
     ///
@@ -943,19 +909,15 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     /// Randomly decide if the wall should be open or closed
     ///
-
     if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier) && genInfo->wallsCreated < MAX_WALL_COUNT){
         newWall->percentClosed = 100;
         newWall->state = closed;
         genInfo->wallsCreated++;
-
-        //printf("Walls created %d\n", genInfo->wallsCreated);
     }
     else{
         newWall->percentClosed = 0;
         newWall->state = open;
     }
-    //printf("wallsCreated: %d\n", genInfo->wallsCreated);
 
     ///
     /// Use the spawnChanceModifier to push the spawnChance
@@ -1040,7 +1002,6 @@ float DeltaGravity(int lastCollisionTime){
     return GRAVITY_RATE * deltaTime / 1000;
 }
 
-
 void PrintWallGeneration(){
     int x, z;
 
@@ -1094,4 +1055,59 @@ void PrintWallGeneration(){
         putchar('\n');
     }
 
+}
+
+
+int Node_WallCount(Node *node){
+    int count = 0;
+
+    if(node->north != NULL && node->north->state == closed){
+        count++;
+    }
+
+    if(node->east != NULL && node->east->state == closed){
+        count++;
+    }
+
+    if(node->south != NULL && node->south->state == closed){
+        count++;
+    }
+
+    if(node->west != NULL && node->west->state == closed){
+        count++;
+    }
+
+
+    return count;
+}
+
+
+
+int CountAllWalls(){
+    int count = 0, x, z;
+    Node *currentNode;
+
+    for(x = 0; x < WALL_COUNT_X - 1; x++){
+        for(z = 0; z < WALL_COUNT_Z - 1; z++){
+            currentNode = &(nodes[x][z]);
+
+            if(x == 0 && currentNode->west->state == closed){
+                count++;
+            }
+
+            if(z == 0 && currentNode->north->state == closed){
+                count++;
+            }
+
+            if(currentNode->east->state == closed){
+                count++;
+            }
+
+            if(currentNode->south->state == closed){
+                count++;
+            }
+        }
+    }
+
+    return count;
 }
