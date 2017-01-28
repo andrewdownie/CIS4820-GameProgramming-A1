@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 200
+#define CHANGE_WALLS_TIME_MS 1000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -701,6 +701,16 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
     int yOffset, z;
 
 
+    ///
+    /// Clear the wall first
+    ///
+    for(z = 0; z < WALL_LENGTH; z++){
+
+        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+            world[wallX][1 + yOffset][wallZ + z] = 0;
+        }
+
+    }
 
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(z = 0; z < actualWallLength; z++){
@@ -716,6 +726,18 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ){
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ){
     int actualWallLength;
     int yOffset, x;
+
+    ///
+    /// Clear the wall first
+    ///
+    for(x = 0; x < WALL_LENGTH; x++){
+
+        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+            world[wallX + x][1 + yOffset][wallZ] = 0;
+        }
+
+    }
+
 
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(x = 0; x < actualWallLength; x++){
@@ -975,7 +997,7 @@ void ChangeWalls(){
 
 
 
-    //PlaceWalls();
+    PlaceWalls();
     glutTimerFunc(CHANGE_WALLS_TIME_MS, ChangeWalls, CHANGE_WALLS_TIME_MS);
 }
 
