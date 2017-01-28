@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 30
+#define CHANGE_WALLS_TIME_MS 200
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -828,7 +828,7 @@ void ChangeWalls(){
             adjacentOpenWalls[openWallCount] = nodes[randX][randZ - 1].south;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjacentOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
@@ -855,7 +855,7 @@ void ChangeWalls(){
             adjacentOpenWalls[openWallCount] = nodes[randX][randZ + 1].north;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjacentOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
