@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 1500
+#define CHANGE_WALLS_TIME_MS 500
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -47,7 +47,7 @@ int totalWalls;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 1
+#define GRAVITY_ENABLED 0
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -746,19 +746,20 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
 
-        if(wall->direction == moveSouth){
-            for(z = actualWallLength - 1; z >= 0; z--){
+        if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
+            for(z = 0; z < actualWallLength; z++){
                 world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
             }
+
 
 
         }
         else{
 
-
             for(z = 0; z < actualWallLength; z++){
-                world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
+                world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = WALL_COLOUR;
             }
+
 
         }
 
@@ -819,9 +820,9 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
 
-        if(wall->direction == moveWest){
+        if( (wall->direction == moveWest && wall->state == closing) || (wall->direction == moveEast && wall->state == opening) ){
 
-            for(x = actualWallLength - 1; x >= 0; x--){
+            for(x = 0; x < actualWallLength; x++){
                 world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
             }
 
@@ -829,7 +830,7 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
         }
         else{
             for(x = 0; x < actualWallLength; x++){
-                world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
+                world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = WALL_COLOUR;
             }
 
         }
