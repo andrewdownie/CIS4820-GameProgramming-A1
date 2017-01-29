@@ -71,7 +71,6 @@
 ///
 int MAP_SIZE_X;
 int MAP_SIZE_Z;
-int totalWalls;
 
 ///
 /// Player Settings
@@ -111,6 +110,7 @@ Pillar pillars[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
 void ChangeWalls();
 void SetupWalls();
+void FreeWalls();
 
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
@@ -309,7 +309,7 @@ void collisionResponse() {
     if(curIndex_y > oldIndex_y + 1){
         curPos_x = oldPos_x;
         curPos_y = oldPos_y;
-        curPos_z = curPos_z;
+        curPos_z = oldPos_z;//TODO: this didn't do anything before...
     }
 
 
@@ -356,8 +356,6 @@ void draw2D() {
 /*  system is running */
 /* -gravity must also implemented here, duplicate collisionResponse */
 void update() {
-    int i, j, k;
-    float *la;
 
     /* sample animation for the test world, don't remove this code */
     /* -demo of animating mobs */
@@ -413,7 +411,7 @@ void update() {
 
 
 
-    } else {//////////////////////////// LOGIC GOES HERE
+    } else {
         int currentElapsedTime, deltaWallChangeTime;
 
         if(AUTO_CHANGE_WALLS){
@@ -574,6 +572,7 @@ int main(int argc, char** argv)
     /* starts the graphics processing loop */
     /* code after this will not run until the program exits */
     glutMainLoop();
+    FreeWalls();
     return 0;
 }
 
@@ -657,7 +656,6 @@ void SetupWalls(){
     int wallCount;
     int x, z;
 
-    Wall *targetWall, *adjacentWall;
     GenerationInfo genInfo;
 
 
@@ -747,6 +745,31 @@ void SetupWalls(){
 
     pillars[0][0].west->percentClosed = 0;
     pillars[0][0].west->state = open;
+
+}
+
+
+///
+/// FreeWalls
+///
+void FreeWalls(){
+/// Goes through all the walls, and frees them.
+
+    int x, z;
+
+    for(x = 0; x < WALL_COUNT_X - 1; x++){
+        for(z = 0; z < WALL_COUNT_Z - 1; z++){
+            if(x == 0){
+                free(pillars[z][x].west);
+            }
+            if(z == 0){
+                free(pillars[z][x].north);
+            }
+
+            free(pillars[z][x].east);
+            free(pillars[z][x].south);
+        }
+    }
 
 }
 
@@ -994,7 +1017,7 @@ void ChangeWalls(){
 
 
     int openWallCount = 0, closedWallCount = 0;
-    int randOpenWall, randClosedWall;
+    int randOpenWall = 0, randClosedWall = 0;
     int i;
 
     for(i = 0; i < 4; i++){
