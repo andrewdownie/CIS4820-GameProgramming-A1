@@ -34,12 +34,13 @@
 //       |---> collisionRespose
 
 
-#include <stdio.h>
+
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include <math.h>
 #include <time.h>
-#include <stdbool.h>
 
 #include "graphics.h"
 
@@ -75,8 +76,8 @@ int totalWalls;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 1
 #define GRAVITY_RATE 9.8f
+
 #define PLAYER_HEIGHT 2
 
 
@@ -87,25 +88,26 @@ int totalWalls;
 #define EMPTY_PIECE 0
 #define WALKABLE 1
 
+
+
 ///
 /// Delta Time
 ///
+int lastWallChangeTime;
 int lastGravityTime;
 int lastUpdateTime;
-int lastWallChangeTime;
+
 
 ///
-/// Pillarss and Walls
+/// Pillars
 ///
 Pillar pillars[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 
 
 
 ///
-/// World building and wall manipulation
+/// Wall maipulation and world building
 ///
-void BuildWorldShell();
-
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
 void ChangeWalls();
 void SetupWalls();
@@ -114,26 +116,22 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime);
 void PlaceWalls(int deltaTime);
 
-
+void BuildWorldShell();
 
 
 
 
 ///
-/// Utility forward delcarations
+/// Utility function forward delcarations
 ///
-int WalkablePiece(int x, int y, int z);
-int WalkablePiece_I3(Int3 xyz);
-int PercentChance(float chance);
-
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
+int PercentChance(float chance);
 
+int WalkablePiece(int x, int y, int z);
+void PrintWallGeneration();
 int Pillar_WallCount();
 int CountAllWalls();
-
-void PrintWallGeneration();
-
 
 
 
@@ -213,44 +211,51 @@ void collisionResponse() {
     ///
     /// Variables
     ///
-    Vector3 curPos, oldPos;
-    Int3 curIndex, oldIndex;
+    int curIndex_x, curIndex_y, curIndex_z;
+    int oldIndex_x, oldIndex_y, oldIndex_z;
 
-    int floorLevel;
-    float deltaGravity = DeltaGravity(lastGravityTime);
+    float curPos_x, curPos_y, curPos_z;
+    float oldPos_x, oldPos_y, oldPos_z;
 
+    float deltaGravity;
     int previousPiece;
     int currentPiece;
+    int floorLevel;
+
+
+
+    deltaGravity = DeltaGravity(lastGravityTime);
 
 
     ///
     /// Initial Setup
     ///
-    getOldViewPosition(&oldPos.x, &oldPos.y, &oldPos.z);
-    getViewPosition(&curPos.x, &curPos.y, &curPos.z);
+    getOldViewPosition(&oldPos_x, &oldPos_y, &oldPos_z);
+    getViewPosition(&curPos_x, &curPos_y, &curPos_z);
 
-    oldIndex.x = (int)oldPos.x * -1;
-    oldIndex.y = (int)oldPos.y * -1;
-    oldIndex.z = (int)oldPos.z * -1;
+    oldIndex_x = (int)oldPos_x * -1;
+    oldIndex_y = (int)oldPos_y * -1;
+    oldIndex_z = (int)oldPos_z * -1;
 
-    curIndex.x = (int)curPos.x * -1;
-    curIndex.y = (int)curPos.y * -1;
-    curIndex.z = (int)curPos.z * -1;
+    curIndex_x = (int)curPos_x * -1;
+    curIndex_y = (int)curPos_y * -1;
+    curIndex_z = (int)curPos_z * -1;
 
-    previousPiece = WalkablePiece(oldIndex.x, oldIndex.y, oldIndex.z);
-    currentPiece = WalkablePiece(curIndex.x, curIndex.y, curIndex.z);
+    previousPiece = WalkablePiece(oldIndex_x, oldIndex_y, oldIndex_z);
+    currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
 
 
     ///
     /// PLAYER MOVEMENT: Collision with walls and floors
     ///
+
     //Handle: camera moving down into blocks below
     if(currentPiece == NOT_WALKABLE){
 
-        if(oldIndex.y > curIndex.y){
-            curPos.y = (curIndex.y + 1) * -1;
-            curIndex.y = (int)curPos.y * -1;
-            currentPiece = WalkablePiece(curIndex.x, curIndex.y, curIndex.z);
+        if(oldIndex_y > curIndex_y){
+            curPos_y = (curIndex_y + 1) * -1;
+            curIndex_y = (int)curPos_y * -1;
+            currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
         }
 
     }
@@ -258,11 +263,9 @@ void collisionResponse() {
     //Handle: camera moving sideways into walls
     if(currentPiece == NOT_WALKABLE){
 
-        if(curIndex.x != oldIndex.x || curIndex.z != oldIndex.z){
-            curPos.x = oldPos.x;
-            curPos.z = oldPos.z;
-
-            //TODO: if moved to its own fucntion, set the viewport position here
+        if(curIndex_x != oldIndex_x || curIndex_z != oldIndex_z){
+            curPos_x = oldPos_x;
+            curPos_z = oldPos_z;
         }
 
     }
@@ -271,28 +274,28 @@ void collisionResponse() {
     ///
     /// GRAVITY: collision with walls and floors
     ///
-    oldIndex.x = curIndex.x;
-    oldIndex.y = curIndex.y;
-    oldIndex.z = curIndex.z;
-    oldPos.x = curPos.x;
-    oldPos.y = curPos.y;
-    oldPos.z = curPos.z;
+    oldIndex_x = curIndex_x;
+    oldIndex_y = curIndex_y;
+    oldIndex_z = curIndex_z;
+    oldPos_x = curPos_x;
+    oldPos_y = curPos_y;
+    oldPos_z = curPos_z;
 
 
-    if(GRAVITY_ENABLED){
-        for(floorLevel = curIndex.y; floorLevel > 0; floorLevel--){
+    if(flycontrol == 0){
+        for(floorLevel = curIndex_y; floorLevel > 0; floorLevel--){
 
-            if(WalkablePiece(curIndex.x, floorLevel, curIndex.z) == NOT_WALKABLE){
+            if(WalkablePiece(curIndex_x, floorLevel, curIndex_z) == NOT_WALKABLE){
                 break;
             }
         }
         floorLevel = floorLevel + PLAYER_HEIGHT;
 
-        if(floorLevel >= (curPos.y * -1) - deltaGravity){
-            curPos.y = floorLevel * -1;
+        if(floorLevel >= (curPos_y * -1) - deltaGravity){
+            curPos_y = floorLevel * -1;
         }
         else{
-            curPos.y = curPos.y + deltaGravity;
+            curPos_y = curPos_y + deltaGravity;
         }
 
     }
@@ -300,20 +303,20 @@ void collisionResponse() {
     ///
     /// Prevent climbing walls higher than one block tall
     ///
-    curIndex.y = (int)curPos.y * -1;
-    oldIndex.y = (int)oldPos.y * -1;
+    curIndex_y = (int)curPos_y * -1;
+    oldIndex_y = (int)oldPos_y * -1;
 
-    if(curIndex.y > oldIndex.y + 1){
-        curPos.x = oldPos.x;
-        curPos.y = oldPos.y;
-        curPos.z = curPos.z;
+    if(curIndex_y > oldIndex_y + 1){
+        curPos_x = oldPos_x;
+        curPos_y = oldPos_y;
+        curPos_z = curPos_z;
     }
 
 
     ///
     /// Finish
     ///
-    setViewPosition(curPos.x, curPos.y, curPos.z);
+    setViewPosition(curPos_x, curPos_y, curPos_z);
     lastGravityTime = glutGet(GLUT_ELAPSED_TIME);
 }
 
@@ -543,18 +546,25 @@ int main(int argc, char** argv)
         ///
         /// Setup some cubes to climb up for testing
         ///
-        world[0][2][1] = 5;
-        world[0][3][1] = 5;
-
-        world[1][2][1] = 5;
-        world[2][2][1] = 5;
-        world[3][2][1] = 5;
         world[3][1][2] = 5;
-        /* create sample player */
-        //createPlayer(0, 52.0, 1.0, 52.0, 0.0);
 
+        world[2][1][2] = 5;
+        world[2][2][2] = 5;
 
+        world[2][1][3] = 5;
+        world[2][2][3] = 5;
+        world[2][3][3] = 5;
 
+        world[3][1][3] = 5;
+        world[3][2][3] = 5;
+        world[3][3][3] = 5;
+        world[3][4][3] = 5;
+
+        world[3][1][4] = 5;
+        world[3][2][4] = 5;
+        world[3][3][4] = 5;
+        world[3][4][4] = 5;
+        world[3][5][4] = 5;
 
     }
 
@@ -734,6 +744,9 @@ void SetupWalls(){
 
 
     }
+
+    pillars[0][0].west->percentClosed = 0;
+    pillars[0][0].west->state = open;
 
 }
 
@@ -1076,7 +1089,7 @@ void ChangeWalls(){
         closedWalls[closedWallCount] = currentPillar->south;
         closedWallsDir[closedWallCount] = moveNorth;
 
-        if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the pillars -1, and then index 0 right?
+        if(randZ < WALL_COUNT_Z - 2){
             adjClosedWalls[closedWallCount] = pillars[randX][randZ + 1].north;
             adjClosedWallsDir[closedWallCount] = moveSouth;
         }
@@ -1090,7 +1103,7 @@ void ChangeWalls(){
         openWalls[openWallCount] = currentPillar->south;
         openWallsDir[openWallCount] = moveSouth;
 
-        if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the pillars -1, and then index 0 right?
+        if(randZ < WALL_COUNT_Z - 2){
             adjOpenWalls[openWallCount] = pillars[randX][randZ + 1].north;
             adjOpenWallsDir[openWallCount] = moveNorth;
         }
@@ -1337,24 +1350,6 @@ int WalkablePiece(int x, int y, int z){
 
     return count == 0;
 }
-
-
-///
-/// DELETE THIS
-///
-int WalkablePiece_I3(Int3 xyz){
-    int count = 0, height;
-
-    for(height = 0; height < PLAYER_HEIGHT; height++){
-        if(world[xyz.x][xyz.y + height][xyz.z] != EMPTY_PIECE){
-            count++;
-        }
-    }
-
-    return count == 0;
-}
-
-
 
 ///
 /// Clamp

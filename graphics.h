@@ -19,18 +19,6 @@ GLubyte  world[WORLDX][WORLDY][WORLDZ];
 
 #define MAX_DISPLAY_LIST 500000
 
-typedef struct V3 { //TODO: DELETE THIS
-    float x;
-    float y;
-    float z;
-} Vector3;
-
-typedef struct I3 {//TODO: DELETE THIS
-    int x;
-    int y;
-    int z;
-} Int3;
-
 typedef enum _WallState{
     open,
     closed,
