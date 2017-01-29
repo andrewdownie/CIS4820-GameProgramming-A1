@@ -47,7 +47,7 @@ int totalWalls;
 ///
 /// Player Settings
 ///
-#define GRAVITY_ENABLED 0
+#define GRAVITY_ENABLED 1
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
@@ -703,6 +703,9 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     int yOffset, z;
     int deltaPercent;
 
+    float playerXf, playerYf, playerZf;
+    int playerX, playerZ;
+
     if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
         //return;
     }
@@ -745,23 +748,26 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     ///
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+        for(z = 0; z < actualWallLength; z++){
 
-        if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
-            for(z = 0; z < actualWallLength; z++){
+            if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
                 world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
             }
-
-
-
-        }
-        else{
-
-            for(z = 0; z < actualWallLength; z++){
+            else{
                 world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = WALL_COLOUR;
             }
 
+            getViewPosition(&playerXf, &playerYf, &playerZf);
+            playerX = (int)playerXf * -1;
+            playerZ = (int)playerZf * -1;
+
+            if(playerX == wallX && playerZ == wallZ + z){
+                printf("THE MOVING WALL HIT THE PLAYER@!@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+                setViewPosition(playerXf + 1, playerYf, playerZf);
+            }
 
         }
+
 
     }
 
@@ -772,6 +778,9 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     int actualWallLength;
     int yOffset, x;
     float deltaPercent;
+
+    float playerXf, playerYf, playerZf;
+    int playerX, playerZ;
 
     if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
         //return;
@@ -819,21 +828,27 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     ///
     actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
+        for(x = 0; x < actualWallLength; x++){
 
-        if( (wall->direction == moveWest && wall->state == closing) || (wall->direction == moveEast && wall->state == opening) ){
-
-            for(x = 0; x < actualWallLength; x++){
+            if( (wall->direction == moveWest && wall->state == closing) || (wall->direction == moveEast && wall->state == opening) ){
                 world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
             }
-
-
-        }
-        else{
-            for(x = 0; x < actualWallLength; x++){
+            else{
                 world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = WALL_COLOUR;
             }
 
+
+            getViewPosition(&playerXf, &playerYf, &playerZf);
+            playerX = (int)playerXf * -1;
+            playerZ = (int)playerZf * -1;
+
+            if(playerX == wallX + x && playerZ == wallZ){
+                printf("THE MOVING WALL HIT THE PLAYER@!@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+                setViewPosition(playerXf, playerYf, playerZf - 1);
+            }
+
         }
+
 
     }
 
