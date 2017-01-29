@@ -8,6 +8,32 @@
 /* Frames per second code taken from : */
 /* http://www.lighthouse3d.com/opengl/glut/index.php?fps */
 
+/////
+///// Function call overview:
+/////
+// root: + main
+//       |---> graphicsInit
+//       |---> BuildWorldShell
+//       |---> SetupWalls
+//       |---> PrintWorldGeneration
+//       |---> PlaceWalls
+//       |---> glutMainLoop
+//
+// root: + collisionResponse
+//       |---> DeltaGravity
+//       |---> IsWalkablePiece
+//       |---> getViewPosition
+//       |---> getOldViewPosition
+//       |---> setViewPosition
+//       |---> glutGet (current time)
+//
+// root: + update
+//       |---> glutGet (current time)
+//       |---> ChangeWalls
+//       |---> PlaceWalls
+//       |---> collisionRespose
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,15 +48,15 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 500
+#define CHANGE_WALLS_TIME_MS 1000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
 
-#define OUTER_WALL_COLOR 7
-#define WALL_COLOUR 1
-#define NODE_COLOUR 2
-#define FLOOR_COLOR 3
+#define OUTER_WALL_COLOUR 7
+#define INNER_WALL_COLOUR 1
+#define PILLAR_COLOUR 2
+#define FLOOR_COLOUR 3
 
 #define WALL_COUNT_X 6
 #define WALL_COUNT_Z 6
@@ -547,12 +573,17 @@ int main(int argc, char** argv)
 ///// World Building Functions -------------------------------------------------
 /////
 
+///
+/// BuildWorldShell
+///
 void BuildWorldShell(){
+/// Builds the floor, the outer walls, and the nodes.
+
     int x, y, z;
     int height;
 
     ///
-    /// initialize world to empty
+    /// Initialize world to empty
     ///
     for(x=0; x<WORLDX; x++){
         for(y=0; y<WORLDY; y++){
@@ -563,39 +594,39 @@ void BuildWorldShell(){
     }
 
     ///
-    /// build the floor
+    /// Build the floor
     ///
     for(x=0; x < MAP_SIZE_X - 1; x++) {
         for(z=0; z < MAP_SIZE_Z - 1; z++) {
-            world[x][0][z] = FLOOR_COLOR;
+            world[x][0][z] = FLOOR_COLOUR;
         }
     }
 
     ///
-    /// build the outer walls
+    /// Build the outer walls
     ///
     for(height = 0; height < WALL_HEIGHT; height++){
 
         for(x=0; x < MAP_SIZE_X - 1; x++) {
-            world[x][1 + height][0] = OUTER_WALL_COLOR;
-            world[x][1 + height][MAP_SIZE_Z-2] = OUTER_WALL_COLOR;
+            world[x][1 + height][0] = OUTER_WALL_COLOUR;
+            world[x][1 + height][MAP_SIZE_Z-2] = OUTER_WALL_COLOUR;
         }
 
         for(z=0; z < MAP_SIZE_Z - 1; z++) {
-            world[0][1 + height][z] = OUTER_WALL_COLOR;
-            world[MAP_SIZE_X-2][1 + height][z] = OUTER_WALL_COLOR;
+            world[0][1 + height][z] = OUTER_WALL_COLOUR;
+            world[MAP_SIZE_X-2][1 + height][z] = OUTER_WALL_COLOUR;
         }
 
     }
 
     ///
-    /// Create the nodes
+    /// Create the pillars
     ///
     for(x = 1; x < WALL_COUNT_X; x++){
         for(z = 1; z < WALL_COUNT_Z; z++){
 
             for(height = 0; height < WALL_HEIGHT; height++){
-                world[x * (WALL_LENGTH + 1)][1 + height][z * (WALL_LENGTH + 1)] = NODE_COLOUR;
+                world[x * (WALL_LENGTH + 1)][1 + height][z * (WALL_LENGTH + 1)] = PILLAR_COLOUR;
             }
 
         }
@@ -604,8 +635,15 @@ void BuildWorldShell(){
 }
 
 
-
+///
+/// SetupWalls
+///
 void SetupWalls(){
+/// Generates the initial setup of all the walls. Goes through each wall, and
+///           calls the function SetupWall()
+/// Basically this function acts as for a manager for all the SetupWall calls
+///           being made. The result of every SetupWall call is tracked in the
+///           "genInfo" variable.
     int wallCount;
     int x, z;
 
@@ -621,7 +659,6 @@ void SetupWalls(){
 
     wallCount = ((WALL_COUNT_X - 1) * WALL_COUNT_Z) + (WALL_COUNT_X * (WALL_COUNT_Z - 1));
     genInfo.spawnChance = (TARGET_WALL_COUNT * 100) / wallCount;
-    //printf("Spawn chance is: %f\n", genInfo.spawnChanceModifier);
 
 
     ///
@@ -637,7 +674,7 @@ void SetupWalls(){
     }
 
 
-    for(x = 0; x < WALL_COUNT_X - 1; x++){//DO I NEED TO MINUS ONE??? (there is one less node than wall) -> seems to work...
+    for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
             ///
@@ -700,7 +737,20 @@ void SetupWalls(){
 
 }
 
+
+
+///
+/// PlaceVerticalWall
+///
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
+/// Places blocks starting at "wallX" and "wallZ", and moves along the z-axis.
+/// --
+/// Uses "*wall" to figure out if the wall is open, opening, closed or closing,
+///      also used "*wall" to figure out what direction opening and closing
+///      should be moved.
+/// Uses "deltaTime" to figure out how much an opening or closing wall should be
+///      change in length, which results in the walls appearing to be animated.
+
     int actualWallLength;
     int yOffset, z;
     int deltaPercent;
@@ -753,10 +803,10 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
         for(z = 0; z < actualWallLength; z++){
 
             if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
-                world[wallX][1 + yOffset][wallZ + z] = WALL_COLOUR;
+                world[wallX][1 + yOffset][wallZ + z] = INNER_WALL_COLOUR;
             }
             else{
-                world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = WALL_COLOUR;
+                world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = INNER_WALL_COLOUR;
             }
 
             getViewPosition(&playerXf, &playerYf, &playerZf);
@@ -764,7 +814,6 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
             playerZ = (int)playerZf * -1;
 
             if(playerX == wallX && playerZ == wallZ + z){
-                printf("THE MOVING WALL HIT THE PLAYER@!@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
                 setViewPosition(playerXf + 1, playerYf, playerZf);
             }
 
@@ -776,7 +825,19 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 
 }
 
+
+///
+/// PlaceHorizontalWall
+///
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
+/// Places blocks starting at "wallX" and "wallZ", and moves along the x-axis.
+/// --
+/// Uses "*wall" to figure out if the wall is open, opening, closed or closing,
+///      also used "*wall" to figure out what direction opening and closing
+///      should be moved.
+/// Uses "deltaTime" to figure out how much an opening or closing wall should be
+///      change in length, which results in the walls appearing to be animated.
+
     int actualWallLength;
     int yOffset, x;
     float deltaPercent;
@@ -833,10 +894,10 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
         for(x = 0; x < actualWallLength; x++){
 
             if( (wall->direction == moveWest && wall->state == closing) || (wall->direction == moveEast && wall->state == opening) ){
-                world[wallX + x][1 + yOffset][wallZ] = WALL_COLOUR;
+                world[wallX + x][1 + yOffset][wallZ] = INNER_WALL_COLOUR;
             }
             else{
-                world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = WALL_COLOUR;
+                world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = INNER_WALL_COLOUR;
             }
 
 
@@ -845,7 +906,6 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
             playerZ = (int)playerZf * -1;
 
             if(playerX == wallX + x && playerZ == wallZ){
-                printf("THE MOVING WALL HIT THE PLAYER@!@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
                 setViewPosition(playerXf, playerYf, playerZf - 1);
             }
 
@@ -857,10 +917,15 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 
 }
 
+///
+/// PlaceWalls
+///
 void PlaceWalls(int deltaTime){
+/// Figures out where each wall starts in worldspace. Calls PlaceHorizontalWall,
+///         or PlaceVerticalWall to actaully place the wall blocks into the world.
+/// "deltaTime": is used to figure out how much the walls being animated
+///              should move
     int x, z;
-
-    //printf("PLACE WALLS\n");
 
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
