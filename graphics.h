@@ -39,14 +39,16 @@ typedef enum _WallState{
 } WallState;
 
 typedef enum _Direction{
-    positive,
-    negative,
-    none
-} Direction;
+    moveNorth,
+    moveSouth,
+    moveEast,
+    moveWest,
+    notMoving
+} MovementDirection;
 
 typedef struct _Wall{
     float percentClosed;
-    Direction direction;
+    MovementDirection direction;
     WallState state;
 } Wall;
 

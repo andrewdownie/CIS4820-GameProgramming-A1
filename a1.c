@@ -20,7 +20,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 1000
+#define CHANGE_WALLS_TIME_MS 500
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -392,7 +392,7 @@ void update() {
             lastWallChangeTime += deltaWallChangeTime;
 
             if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
-                lastWallChangeTime -= CHANGE_WALLS_TIME_MS;
+                lastWallChangeTime = 0;
                 ChangeWalls();
 
             }
@@ -639,13 +639,6 @@ void SetupWalls(){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
             ///
-            /// Make sure a node never has more than 3 walls //TODO: I don't think this is a good way of doing this...
-            ///
-            if(  Node_WallCount( &(nodes[x][z]) )  > 2){
-            //    continue;
-            }
-
-            ///
             /// North wall
             ///
             if(z > 0){
@@ -730,7 +723,7 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     ///
     /// Update the wall using deltaTime
     ///
-    deltaPercent = ((float)CHANGE_WALLS_TIME_MS * deltaTime) / (float)WALL_COUNT_X  / 1000;
+    deltaPercent = (((float)deltaTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
     if(wall->state == opening){
         wall->percentClosed -= deltaPercent;
         if(wall->percentClosed < 0){
@@ -786,20 +779,24 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     ///
     /// Update the wall using deltaTime
     ///
-    deltaPercent = ((float)CHANGE_WALLS_TIME_MS * deltaTime) / (float)WALL_COUNT_X  / 1000;
+    deltaPercent = (((float)deltaTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
     if(wall->state == opening){
         wall->percentClosed -= deltaPercent;
+
         if(wall->percentClosed <= 0){
             wall->percentClosed = 0;
             wall->state = open;
         }
+
     }
     else if(wall->state == closing){
         wall->percentClosed += deltaPercent;
+
         if(wall->percentClosed > 100){
             wall->percentClosed = 100;
             wall->state = closed;
         }
+
     }
 
 
@@ -847,12 +844,15 @@ void ChangeWalls(){
     int randomNode;
     int nodeCount;
 
+    MovementDirection adjOpenWallsDir[4], adjClosedWallsDir[4];
+    MovementDirection openWallsDir[4], closedWallsDir[4];
 
+    Wall *adjOpenWalls[4], *adjClosedWalls[4];
     Wall *openWalls[4], *closedWalls[4];
-    Wall *adjacentOpenWalls[4], *adjacentClosedWalls[4];
 
+    Wall *adjWallToClose, *adjWallToOpen;
     Wall *wallToClose, *wallToOpen;
-    Wall *adjacentWallToClose, *adjacentWallToOpen;
+
 
     Node *currentNode;
 
@@ -861,6 +861,11 @@ void ChangeWalls(){
     int randOpenWall, randClosedWall;
     int i;
 
+    for(i = 0; i < 4; i++){
+        openWalls[i] = NULL;
+        closedWalls[i] = NULL;
+    }
+
 
 
     nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
@@ -868,6 +873,7 @@ void ChangeWalls(){
     ///
     /// Pick a random node, and make sure it has walls that can be moved
     ///
+    i = 0;
     while(1){
         randomNode = rand() % nodeCount + 1;
 
@@ -880,12 +886,21 @@ void ChangeWalls(){
 
         currentNode = &(nodes[randX][randZ]);
 
+
         if(Node_WallCount(currentNode) != 0 && Node_WallCount(currentNode) != 4){
             break;
         }
+        i++;
 
+        if(i > 1000){
+            printf("\tWallcount: %d\n", Node_WallCount(currentNode));
+            printf("!-!-! ERROR: was unable to randomly pick a valid node (within 1000 random picks) for wall movement\n");
+            return;
+        }
         //printf("Generate new current node: %d, %d-%d %f\n", Node_WallCount(currentNode), randX, randZ, currentNode->north->percentClosed);
     }
+
+
 
 
 
@@ -894,30 +909,35 @@ void ChangeWalls(){
     ///
     wallToOpen = NULL;
     wallToClose = NULL;
-    adjacentWallToOpen = NULL;
-    adjacentWallToClose = NULL;
+    adjWallToOpen = NULL;
+    adjWallToClose = NULL;
 
 
     if(currentNode->north->state == closed){
         closedWalls[closedWallCount] = currentNode->north;
+        closedWallsDir[closedWallCount] = moveSouth;
+
 
         if(randZ > 0){
-            adjacentClosedWalls[closedWallCount] = nodes[randX][randZ - 1].south;
+            adjClosedWalls[closedWallCount] = nodes[randX][randZ - 1].south;
+            adjClosedWallsDir[closedWallCount] = moveNorth;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjClosedWalls[closedWallCount] = NULL;
         }
 
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->north;
+        openWallsDir[openWallCount] = moveNorth;
 
         if(randZ > 0){
-            adjacentOpenWalls[openWallCount] = nodes[randX][randZ - 1].south;
+            adjOpenWalls[openWallCount] = nodes[randX][randZ - 1].south;
+            adjOpenWallsDir[openWallCount] = moveSouth;
         }
         else{
-            adjacentOpenWalls[openWallCount] = NULL;
+            adjOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
@@ -927,24 +947,28 @@ void ChangeWalls(){
 
     if(currentNode->south->state == closed){
         closedWalls[closedWallCount] = currentNode->south;
+        closedWallsDir[closedWallCount] = moveNorth;
 
         if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the nodes -1, and then index 0 right?
-            adjacentClosedWalls[closedWallCount] = nodes[randX][randZ + 1].north;
+            adjClosedWalls[closedWallCount] = nodes[randX][randZ + 1].north;
+            adjClosedWallsDir[closedWallCount] = moveSouth;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjClosedWalls[closedWallCount] = NULL;
         }
 
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->south;
+        openWallsDir[openWallCount] = moveSouth;
 
         if(randZ < WALL_COUNT_Z - 2){//TODO: minus two for the nodes -1, and then index 0 right?
-            adjacentOpenWalls[openWallCount] = nodes[randX][randZ + 1].north;
+            adjOpenWalls[openWallCount] = nodes[randX][randZ + 1].north;
+            adjOpenWallsDir[openWallCount] = moveNorth;
         }
         else{
-            adjacentOpenWalls[openWallCount] = NULL;
+            adjOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
@@ -954,49 +978,58 @@ void ChangeWalls(){
 
     if(currentNode->east->state == closed){
         closedWalls[closedWallCount] = currentNode->east;
+        closedWallsDir[closedWallCount] = moveWest;
 
         if(randX < WALL_COUNT_X - 2){
-            adjacentClosedWalls[closedWallCount] = nodes[randX + 1][randZ].west;
+            adjClosedWalls[closedWallCount] = nodes[randX + 1][randZ].west;
+            adjClosedWallsDir[closedWallCount] = moveEast;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjClosedWalls[closedWallCount] = NULL;
         }
 
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->east;
+        openWallsDir[openWallCount] = moveEast;
 
         if(randX < WALL_COUNT_X - 2){
-            adjacentOpenWalls[openWallCount] = nodes[randX + 1][randZ].west;
+            adjOpenWalls[openWallCount] = nodes[randX + 1][randZ].west;
+            adjOpenWallsDir[openWallCount] = moveWest;
         }
         else{
-            adjacentOpenWalls[openWallCount] = NULL;
+            adjOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
     }
 
+
     if(currentNode->west->state == closed){
         closedWalls[closedWallCount] = currentNode->west;
+        closedWallsDir[closedWallCount] = moveEast;
 
         if(randX > 0){
-            adjacentClosedWalls[closedWallCount] = nodes[randX - 1][randZ].east;
+            adjClosedWalls[closedWallCount] = nodes[randX - 1][randZ].east;
+            adjClosedWallsDir[closedWallCount] = moveWest;
         }
         else{
-            adjacentClosedWalls[closedWallCount] = NULL;
+            adjClosedWalls[closedWallCount] = NULL;
         }
 
         closedWallCount++;
     }
     else{
         openWalls[openWallCount] = currentNode->west;
+        openWallsDir[openWallCount] = moveWest;
 
         if(randX > 0){
-            adjacentOpenWalls[openWallCount] = nodes[randX - 1][randZ].east;
+            adjOpenWalls[openWallCount] = nodes[randX - 1][randZ].east;
+            adjOpenWallsDir[openWallCount] = moveEast;
         }
         else{
-            adjacentOpenWalls[openWallCount] = NULL;
+            adjOpenWalls[openWallCount] = NULL;
         }
 
         openWallCount++;
@@ -1014,8 +1047,7 @@ void ChangeWalls(){
         printf("ERROR!: this node has four open walls--------------------\n");
     }
 
-    wallToOpen = closedWalls[randClosedWall];
-    adjacentWallToOpen = adjacentClosedWalls[randClosedWall];
+
 
 
     ///
@@ -1028,36 +1060,34 @@ void ChangeWalls(){
         printf("ERROR!: this node has four closed walls--------------------\n");
     }
 
-    wallToClose = openWalls[randOpenWall];
-    adjacentWallToClose = adjacentOpenWalls[randOpenWall];
 
-    //printf("--Start moving walls--\n");
 
-    //printf("---- wall to open\n");
-    //wallToOpen->percentClosed = 0;
+    wallToOpen = closedWalls[randClosedWall];
+    wallToOpen->direction = closedWallsDir[randClosedWall];
     wallToOpen->state = opening;
 
-    if(adjacentWallToOpen != NULL){
-        adjacentWallToOpen->percentClosed = 0;
-        adjacentWallToOpen->state = opening;
+
+    adjWallToOpen = adjClosedWalls[randClosedWall];
+    if(adjWallToOpen != NULL){
+        adjWallToOpen->state = opening;
+        adjWallToOpen->direction = adjClosedWallsDir[randClosedWall];
     }
     else{
         printf("Adjacent wall to open was null\n");
     }
 
-    //printf("---- wall to close\n");
-    //wallToClose->percentClosed = 100;
+    wallToClose = openWalls[randOpenWall];
+    wallToClose->direction = closedWallsDir[randClosedWall];
     wallToClose->state = closing;
-    //printf("---- wall to close 2\n");
 
-    if(adjacentWallToClose != NULL){
-        //printf("---- wall to close 3\n");
-        //adjacentWallToClose->percentClosed = 100;
-        adjacentWallToClose->state = closing;
-        //printf("---- wall to close 4\n");
+
+    adjWallToClose = adjOpenWalls[randOpenWall];
+    if(adjWallToClose != NULL){
+        adjWallToClose->state = closing;
+        adjWallToClose->direction = adjOpenWallsDir[randOpenWall];
     }
     else{
-        //printf("Adjacent wall to close was null\n");
+        printf("Adjacent wall to close was null\n");
     }
 
     printf("\t walls remaining: %d\n", CountAllWalls());
@@ -1090,7 +1120,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     /// Malloc the new wall
     ///
     Wall *newWall = (Wall*)malloc(sizeof(Wall));
-    newWall->direction = none;
+    newWall->direction = notMoving;
     genInfo->creationAttempts++;
 
 
@@ -1279,19 +1309,19 @@ int CountAllWalls(){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             currentNode = &(nodes[x][z]);
 
-            if(x == 0 && currentNode->west->state == closed){
+            if(x == 0 && (currentNode->west->state == closed || currentNode->west->state == closing)){
                 count++;
             }
 
-            if(z == 0 && currentNode->north->state == closed){
+            if(z == 0 &&  (currentNode->north->state == closed || currentNode->north->state == closing)){
                 count++;
             }
 
-            if(currentNode->east->state == closed){
+            if( (currentNode->east->state == closed || currentNode->east->state == closing)){
                 count++;
             }
 
-            if(currentNode->south->state == closed){
+            if( (currentNode->south->state == closed || currentNode->south->state == closing)){
                 count++;
             }
         }
