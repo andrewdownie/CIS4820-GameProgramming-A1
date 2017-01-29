@@ -52,9 +52,9 @@ typedef struct _Wall{
     WallState state;
 } Wall;
 
-typedef struct _Node{
+typedef struct _Pillar{
     Wall *north, *south, *east, *west;
-} Node;
+} Pillar;
 
 typedef struct _GenerationInfo{
     float spawnChanceModifier;
