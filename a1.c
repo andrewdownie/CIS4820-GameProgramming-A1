@@ -1,3 +1,5 @@
+//// CIS*4280 A1
+//// Andrew Downie - 0786342
 
 /* Derived from scene.c in the The OpenGL Programming Guide */
 /* Keyboard and mouse rotation taken from Swiftless Tutorials #23 Part 2 */
@@ -878,9 +880,24 @@ void PlaceWalls(int deltaTime){
 }
 
 
+///
+/// ChangeWalls
+///
 void ChangeWalls(){
-    printf("Change walls meow...\n");
+/// Picks a wall to open and a wall to close. Sets these walls states so they
+///       get animated opening / closing over time.
+/// STEPS:
+/// 1. Setup variables, clear variables.
+/// 2. Pick a random pillar.
+/// 3. For the picked pillar: create a closedWall list, and a openWall list.
+/// 4. Pick a random closed wall, from the closedWall list.
+/// 5. Pick a random open wall, from the openWall list.
+/// 6. Set the selected closed wall to open
+/// 7. Set the selected open wall to close
 
+    ///
+    /// 1. Setup variables, clear variables
+    ///
     int randX, randZ;
     int randomNode;
     int nodeCount;
@@ -909,11 +926,13 @@ void ChangeWalls(){
 
 
 
-    nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
+
 
     ///
-    /// Pick a random node, and make sure it has walls that can be moved
+    /// 2. Pick a random node, and make sure it has walls that can be moved
+    ///      if we happen to get a node that can't move walls, pick a new node.
     ///
+    nodeCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
     i = 0;
     while(1){
         randomNode = rand() % nodeCount + 1;
@@ -938,7 +957,6 @@ void ChangeWalls(){
             printf("!-!-! ERROR: was unable to randomly pick a valid node (within 1000 random picks) for wall movement\n");
             return;
         }
-        //printf("Generate new current node: %d, %d-%d %f\n", Node_WallCount(currentNode), randX, randZ, currentNode->north->percentClosed);
     }
 
 
@@ -946,7 +964,10 @@ void ChangeWalls(){
 
 
     ///
-    /// Figure out if each wall is open or closed
+    /// 3. For the current pillar: create a list of open walls, and a list of
+    ///        closed walls.
+    ///    Track how the adjacent pillars should be affected for each wall on
+    ///          each list (as most walls are attached to two pillars).
     ///
     wallToOpen = NULL;
     wallToClose = NULL;
@@ -1079,30 +1100,33 @@ void ChangeWalls(){
 
 
     ///
-    /// Pick a random closed wall
+    /// 4. Pick a random closed wall, from the closedWall list
     ///
     if(closedWallCount > 0){
         randClosedWall = rand() % closedWallCount;
     }
     else{
-        printf("ERROR!: this node has four open walls--------------------\n");
+        //printf("This node has four open walls--------------------\n");
     }
 
 
 
 
     ///
-    /// Pick a random open wall
+    /// 5. Pick a random open wall from the openWall list
     ///
     if(openWallCount > 0){
         randOpenWall = rand() % openWallCount;
     }
     else{
-        printf("ERROR!: this node has four closed walls--------------------\n");
+        //printf("This node has four closed walls--------------------\n");
     }
 
 
 
+    ///
+    /// 6. Set the selected closed wall to open
+    ///
     wallToOpen = closedWalls[randClosedWall];
     wallToOpen->direction = closedWallsDir[randClosedWall];
     wallToOpen->state = opening;
@@ -1114,9 +1138,13 @@ void ChangeWalls(){
         adjWallToOpen->direction = adjClosedWallsDir[randClosedWall];
     }
     else{
-        printf("Adjacent wall to open was null\n");
+        //printf("Adjacent wall to open was null\n");
     }
 
+
+    ///
+    /// 7. Set the selected open wall to close
+    ///
     wallToClose = openWalls[randOpenWall];
     wallToClose->direction = closedWallsDir[randClosedWall];
     wallToClose->state = closing;
@@ -1128,17 +1156,21 @@ void ChangeWalls(){
         adjWallToClose->direction = adjOpenWallsDir[randOpenWall];
     }
     else{
-        printf("Adjacent wall to close was null\n");
+        //printf("Adjacent wall to close was null\n");
     }
-
-    printf("\t walls remaining: %d\n", CountAllWalls());
 
 }
 
 
 
-
+///
+/// SetupWall
+///
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
+/// Mallocs memory for a wall. Then randomly decides if that wall should be
+///         created opened or closed. Tracks whether a wall was created opened
+///         or closed using the genInfo struct passed in.
+
     float currentSpawnPercentage;
 
     ///
@@ -1206,9 +1238,14 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
 ///// Utility Functions --------------------------------------------------------
 /////
 
-//Generates a random boolean in the form of 0 and 1.
-//Parameter "percent": is the chance out of 100 that this function will return 1.
+///
+/// PercentChance
+///
 int PercentChance(float percent){
+/// Generates a random boolean in the form of an int with the value 0 or 1.
+/// Parameter "percent": is the chance out of 100 that this function will return 1.
+/// Setting "percent" to 25, means there should be a 25% chance this function will return 1.
+
     int rnd;
     rnd = rand() % 100 + 1;
 
@@ -1219,7 +1256,12 @@ int PercentChance(float percent){
 }
 
 
+///
+/// WalkablePiece
+///
 int WalkablePiece(int x, int y, int z){
+/// Given determines if a block is empty or not.
+
     int count = 0, height;
 
     for(height = 0; height < PLAYER_HEIGHT; height++){
@@ -1231,6 +1273,10 @@ int WalkablePiece(int x, int y, int z){
     return count == 0;
 }
 
+
+///
+/// DELETE THIS
+///
 int WalkablePiece_I3(Int3 xyz){
     int count = 0, height;
 
@@ -1244,7 +1290,13 @@ int WalkablePiece_I3(Int3 xyz){
 }
 
 
+
+///
+/// Clamp
+///
 float Clamp(float value, float minVal, float maxVal){
+/// Prevents a value from being bigger than a maxVal, and smaller than a minVal
+
     if(value < minVal){
         return minVal;
     }
@@ -1255,19 +1307,34 @@ float Clamp(float value, float minVal, float maxVal){
     return value;
 }
 
+
+///
+/// DeltaGravity
+///
 float DeltaGravity(int lastCollisionTime){
+/// Given a previous GLUT_ELAPSED_TIME, this function will figure out how much
+///       time has passed, and then figure out how far gravity pulled an object
+///       down, in the amount of time that has passed.
+
     int currentTime = glutGet(GLUT_ELAPSED_TIME);
     int deltaTime = currentTime - lastCollisionTime;
     return GRAVITY_RATE * deltaTime / 1000;
 }
 
+
+
+///
+/// PrintWallGeneration
+///
 void PrintWallGeneration(){
+/// Prints an ascii version of what walls are closed, and what walls are open.
+
     int x, z;
 
     ///
     /// This is for debugging purposes only
     ///
-    printf("DEBUGGING INFO FOR WALL GENERATION\n");
+    printf(" < PRINT WALL GENERATION > \n");
     for(z = 0; z < WALL_COUNT_Z - 1; z++){
 
         for(x = 0; x < WALL_COUNT_X - 1; x++){
@@ -1317,7 +1384,13 @@ void PrintWallGeneration(){
 }
 
 
+
+///
+/// Node_WallCount
+///
 int Node_WallCount(Node *node){
+/// Counts the number of walls on a given node are closed.
+
     int count = 0;
 
     if(node->north != NULL && node->north->state == closed){
@@ -1342,9 +1415,17 @@ int Node_WallCount(Node *node){
 
 
 
+///
+/// CountAllWalls
+///
 int CountAllWalls(){
-    int count = 0, x, z;
+/// Goes through each node, and counts how many closed walls there are currently
+///      closed, or are currently closing on the map.
+
     Node *currentNode;
+    int count, x, z;
+
+    count = 0;
 
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
