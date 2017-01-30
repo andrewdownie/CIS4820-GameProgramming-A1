@@ -35,7 +35,7 @@ float vpx = -2.0, vpy = -45.0, vpz = -2.0;
 float oldvpx, oldvpy, oldvpz;
 
 /* mouse direction coordiates */
-float mvx = 0.0, mvy = 0.0, mvz = 0.0;
+float mvx = 60.0, mvy = 130.0, mvz = 0.0;
 
 /* stores current mouse position value */
 float oldx, oldy;
@@ -268,6 +268,8 @@ int addDisplayList(int x, int y, int z) {
         printf("cubes in the world. Set displayCount = 0 at some point.\n");
         exit(1);
     }
+
+    return 0;//TODO: IS THIS RIGHT?!l
 }
 
 

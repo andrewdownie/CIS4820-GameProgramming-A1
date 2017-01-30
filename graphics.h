@@ -26,13 +26,6 @@ typedef enum _WallState{
     closing
 } WallState;
 
-typedef enum _Direction{
-    moveNorth,
-    moveSouth,
-    moveEast,
-    moveWest,
-    notMoving
-} MovementDirection;
 
 typedef struct _Wall{
     WallState state;

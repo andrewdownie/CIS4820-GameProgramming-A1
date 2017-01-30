@@ -58,7 +58,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 300
+#define CHANGE_WALLS_TIME_MS 3000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -484,14 +484,7 @@ void update() {
             lastWallChangeTime += deltaWallChangeTime;
 
 
-            //PlaceWalls(deltaWallChangeTime);
-
-            //printf("start AnimateWalls\n");
             AnimateWalls(deltaWallChangeTime);
-            //printf("done AnimateWalls\n");
-
-
-
 
 
             if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
@@ -983,20 +976,22 @@ void ChangeWalls(){
     int randomPillar;
     int y;
 
-    int *openWalls[4], *closedWalls[4];
-    Pillar *currentPillar;
-
 
     int openWallCount = 0, closedWallCount = 0;
+    int openWalls[4], closedWalls[4];  
     int i;
 
+    Pillar *currentPillar;
+
     for(i = 0; i < 4; i++){
-        openWalls[i] = NULL;
-        closedWalls[i] = NULL;
+        openWalls[i] = -1;
+        closedWalls[i] = -1;
     }
 
-
-
+    movingPillar_x = -1;
+    movingPillar_z = -1;
+    openingWall = -1;
+    closingWall = -1;
 
 
 
@@ -1033,6 +1028,8 @@ void ChangeWalls(){
             return;
         }
     }
+
+    currentPillar = &(pillars[movingPillar_x][movingPillar_z]);
 
 
 
@@ -1113,6 +1110,9 @@ void ChangeWalls(){
 
     openingWall = closedWalls[randClosedWall];
     closingWall = openWalls[randOpenWall];
+
+    pillars[movingPillar_x][movingPillar_z].wall[openingWall]->state = opening;
+    pillars[movingPillar_x][movingPillar_z].wall[closingWall]->state = closing;
 
     wallPercent = 0;
 
@@ -1224,6 +1224,7 @@ void AnimateWalls(int deltaTime){
         wallPercent = 100;
         selectedPillar->wall[openingWall]->state = open;
         selectedPillar->wall[closingWall]->state = closed;
+
     }
 
     actualLength = (WALL_LENGTH * wallPercent) / 100;
@@ -1240,22 +1241,22 @@ void AnimateWalls(int deltaTime){
       if(closingWall == north){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-             // world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = INNER_WALL_COLOUR;
+              world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = INNER_WALL_COLOUR;
           }
       }
-      else if(closingWall == east){
+      if(closingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-             // world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
+              world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
       }
-      else if(closingWall == south){
+      if(closingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-            //  world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
+              world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
           }
       }
-      else if(closingWall == west){
+      if(closingWall == west){
           for(cur_x = 0; cur_x < actualLength; cur_x++){
               world[startX - cur_x - 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
@@ -1268,26 +1269,27 @@ void AnimateWalls(int deltaTime){
       if(openingWall == north){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-            //  world[startX][1 + y][startZ + cur_z - WALL_LENGTH] = 0;
+              world[startX][1 + y][startZ + cur_z - WALL_LENGTH] = 0;
           }
       }
-      else if(openingWall == east){
+      if(openingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-             // world[startX + cur_x + 1][1 + y][startZ] = 0;
+              world[startX - cur_x + WALL_LENGTH][1 + y][startZ] = 0;
           }
+
       }
-      else if(openingWall == south){
+      if(openingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-             // world[startX][1 + y][startZ + cur_z + 1] = 0;
+              world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = 0;
           }
       }
-      else if(openingWall == west){//TODO: west does not work???
-
+      if(openingWall == west){
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-            //  world[startX - cur_x - 1][1 + y][startZ] = 0;
+              world[startX + cur_x - WALL_LENGTH][1 + y][startZ] = 0;
           }
+
       }
 
     }
