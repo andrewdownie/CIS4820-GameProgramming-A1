@@ -57,7 +57,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 1600
+#define CHANGE_WALLS_TIME_MS 1500
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -357,7 +357,7 @@ void collisionResponse() {
     if(curIndex_y > oldIndex_y + 1){
         curPos_x = oldPos_x;
         curPos_y = oldPos_y;
-        curPos_z = oldPos_z;//TODO: this didn't do anything before...
+        curPos_z = oldPos_z;
     }
 
 
@@ -1053,7 +1053,6 @@ void ChangeWalls(){
     ///
     int randX, randZ;
     int randomPillar;
-    int pillarCount;
 
     MovementDirection adjOpenWallsDir[4], adjClosedWallsDir[4];
     MovementDirection openWallsDir[4], closedWallsDir[4];
@@ -1085,13 +1084,15 @@ void ChangeWalls(){
     /// 2. Pick a random pillar, and make sure it has walls that can be moved
     ///      if we happen to get a pillar that can't move walls, pick a new pillar.
     ///
-    pillarCount = (WALL_COUNT_X - 1) * (WALL_COUNT_Z - 1);
     i = 0;
     while(1){
-        randomPillar = rand() % pillarCount + 1;
 
-        randX = randomPillar / WALL_COUNT_X;
-        randZ = randomPillar % WALL_COUNT_X;
+        randX = rand() % (WALL_COUNT_X - 1);
+        randZ = rand() % (WALL_COUNT_Z - 1);
+
+        if(randX >= WALL_COUNT_X - 1){//TODO: this is experimental
+            randX--;
+        }
 
         if(randZ >= WALL_COUNT_Z - 1){
             randZ--;
