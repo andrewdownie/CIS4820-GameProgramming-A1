@@ -1,6 +1,8 @@
 //// CIS*4280 A1
 //// Andrew Downie - 0786342
 
+
+
 /* Derived from scene.c in the The OpenGL Programming Guide */
 /* Keyboard and mouse rotation taken from Swiftless Tutorials #23 Part 2 */
 /* http://www.swiftless.com/tutorials/opengl/camera2.html */
@@ -8,9 +10,11 @@
 /* Frames per second code taken from : */
 /* http://www.lighthouse3d.com/opengl/glut/index.php?fps */
 
-/////
-///// Function call overview:
-/////
+
+
+///
+/// Function call overview ------------------------------
+///
 // root: + main
 //       |---> graphicsInit
 //       |---> BuildWorldShell
@@ -20,6 +24,12 @@
 //       |---> PlaceWalls
 //       |---> glutMainLoop
 //
+// root: + update
+//       |---> glutGet (current time)
+//       |---> ChangeWalls
+//       |---> PlaceWalls
+//       |---> collisionRespose
+//
 // root: + collisionResponse
 //       |---> DeltaGravity
 //       |---> IsWalkablePiece
@@ -27,15 +37,12 @@
 //       |---> getOldViewPosition
 //       |---> setViewPosition
 //       |---> glutGet (current time)
-//
-// root: + update
-//       |---> glutGet (current time)
-//       |---> ChangeWalls
-//       |---> PlaceWalls
-//       |---> collisionRespose
 
 
 
+///
+/// Includes ----------------------------------------------
+///
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +55,7 @@
 
 
 ///
-/// Wall and floor settings
+/// Wall and floor settings -------------------------------
 ///
 #define CHANGE_WALLS_TIME_MS 100
 #define AUTO_CHANGE_WALLS 1
@@ -68,20 +75,23 @@
 
 
 ///
-/// Runtime Generated "Constants"
+/// Runtime generated "Constants" -------------------------
 ///
 int MAP_SIZE_X;
 int MAP_SIZE_Z;
 
+
+
 ///
-/// Player Settings
+/// Player settings ---------------------------------------
 ///
 #define GRAVITY_RATE 9.8f
 #define PLAYER_HEIGHT 2
 
 
+
 ///
-/// Collision Constants
+/// Collision constants -----------------------------------
 ///
 #define NOT_WALKABLE 0
 #define EMPTY_PIECE 0
@@ -90,22 +100,26 @@ int MAP_SIZE_Z;
 
 
 ///
-/// Delta Time
+/// Delta time --------------------------------------------
+///       Used to record the last time an event occured.
 ///
 int lastWallChangeTime;
 int lastGravityTime;
 int lastUpdateTime;
 
 
+
 ///
-/// Pillars
+/// Pillars -----------------------------------------------
+///         A 2D array of all the pillars, each pillar having references to the
+///           walls that touch it.
 ///
 Pillar pillars[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 
 
 
 ///
-/// Wall maipulation and world building
+/// Wall and floor manipulation forward declarations ------
 ///
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
 void ChangeWalls();
@@ -120,21 +134,25 @@ void BuildWorldShell();
 
 
 
-
 ///
-/// Utility function forward delcarations
+/// Utility function forward delcarations -----------------
 ///
 float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
-int PercentChance(float chance);
+
+void PrintWallGeneration();
 
 int WalkablePiece(int x, int y, int z);
-void PrintWallGeneration();
+int PercentChance(float chance);
+
 int Pillar_WallCount();
 int CountAllWalls();
 
 
 
+///
+/// Engine extern declarations ----------------------------
+///
 /* mouse function called by GLUT when a button is pressed or released */
 void mouse(int, int, int, int);
 
@@ -198,16 +216,15 @@ extern float corners[4][3];
 extern void ExtractFrustum();
 extern void tree(float, float, float, float, float, float, int);
 
-/********* end of extern variable declarations **************/
 
 
-/*** collisionResponse() ***/
-/* -performs collision detection and response */
-/*  sets new xyz  to position of the viewpoint after collision */
-/* -can also be used to implement gravity by updating y position of vp*/
-/* note that the world coordinates returned from getViewPosition()
-will be the negative value of the array indices */
+///
+/// collisionResponse -------------------------------------
+///
 void collisionResponse() {
+/// Performs collision detection and response,
+///          sets new xyz  to position of the viewpoint after collision.
+
     ///
     /// Variables
     ///
@@ -249,7 +266,7 @@ void collisionResponse() {
     /// PLAYER MOVEMENT: Collision with walls and floors
     ///
 
-    //Handle: camera moving down into blocks below
+    /// Handle: camera moving down into blocks below
     if(currentPiece == NOT_WALKABLE){
 
         if(oldIndex_y > curIndex_y){
@@ -260,7 +277,7 @@ void collisionResponse() {
 
     }
 
-    //Handle: camera moving sideways into walls
+    /// Handle: camera moving sideways into walls
     if(currentPiece == NOT_WALKABLE){
 
         if(curIndex_x != oldIndex_x || curIndex_z != oldIndex_z){
@@ -321,15 +338,13 @@ void collisionResponse() {
 }
 
 
-/******* draw2D() *******/
-/* draws 2D shapes on screen */
-/* use the following functions: 			*/
-/*	draw2Dline(int, int, int, int, int);		*/
-/*	draw2Dbox(int, int, int, int);			*/
-/*	draw2Dtriangle(int, int, int, int, int, int);	*/
-/*	set2Dcolour(float []); 				*/
-/* colour must be set before other functions are called	*/
+
+///
+/// draw2D
+///
 void draw2D() {
+/// Draws 2D shapes on the screen.
+
     GLfloat green[] = {0.0, 0.5, 0.0, 0.5};
     GLfloat black[] = {0.0, 0.0, 0.0, 0.5};
 
@@ -348,12 +363,12 @@ void draw2D() {
 }
 
 
-/*** update() ***/
-/* background process, it is called when there are no other events */
-/* -used to control animations and perform calculations while the  */
-/*  system is running */
-/* -gravity must also implemented here, duplicate collisionResponse */
+
+///
+/// update()
+///
 void update() {
+/// Background process, it is called when there are no other events.
 
     /* sample animation for the test world, don't remove this code */
     /* -demo of animating mobs */
@@ -437,12 +452,12 @@ void update() {
 }
 
 
-/* called by GLUT when a mouse button is pressed or released */
-/* -button indicates which button was pressed or released */
-/* -state indicates a button down or button up event */
-/* -x,y are the screen coordinates when the mouse is pressed or */
-/*  released */
+
+///
+/// Mouse
+///
 void mouse(int button, int state, int x, int y) {
+/// called by GLUT when a mouse button is pressed or released.
 
     if (button == GLUT_LEFT_BUTTON)
     //printf("left button - ");
@@ -578,9 +593,12 @@ int main(int argc, char** argv)
 
 
 
+////////////////////////////////////////////////////////////////////////////////
 /////
-///// World Building Functions -------------------------------------------------
+///// World Building Functions =================================================
 /////
+
+
 
 ///
 /// BuildWorldShell
@@ -644,8 +662,9 @@ void BuildWorldShell(){
 }
 
 
+
 ///
-/// SetupWalls
+/// SetupWalls --------------------------------------------
 ///
 void SetupWalls(){
 /// Generates the initial setup of all the walls. Goes through each wall, and
@@ -750,7 +769,7 @@ void SetupWalls(){
 
 
 ///
-/// FreeWalls
+/// FreeWalls ---------------------------------------------
 ///
 void FreeWalls(){
 /// Goes through all the walls, and frees them.
@@ -776,7 +795,7 @@ void FreeWalls(){
 
 
 ///
-/// PlaceVerticalWall
+/// PlaceVerticalWall -------------------------------------
 ///
 void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 /// Places blocks starting at "wallX" and "wallZ", and moves along the z-axis.
@@ -863,7 +882,7 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 
 
 ///
-/// PlaceHorizontalWall
+/// PlaceHorizontalWall -----------------------------------
 ///
 void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 /// Places blocks starting at "wallX" and "wallZ", and moves along the x-axis.
@@ -955,7 +974,7 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 }
 
 ///
-/// PlaceWalls
+/// PlaceWalls --------------------------------------------
 ///
 void PlaceWalls(int deltaTime){
 /// Figures out where each wall starts in worldspace. Calls PlaceHorizontalWall,
@@ -983,7 +1002,7 @@ void PlaceWalls(int deltaTime){
 
 
 ///
-/// ChangeWalls
+/// ChangeWalls -------------------------------------------
 ///
 void ChangeWalls(){
 /// Picks a wall to open and a wall to close. Sets these walls states so they
@@ -1253,7 +1272,7 @@ void ChangeWalls(){
 
 
 ///
-/// SetupWall
+/// SetupWall ---------------------------------------------
 ///
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
 /// Mallocs memory for a wall. Then randomly decides if that wall should be
@@ -1320,13 +1339,15 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+/////
+///// Utility Functions ========================================================
+/////
 
-/////
-///// Utility Functions --------------------------------------------------------
-/////
+
 
 ///
-/// PercentChance
+/// PercentChance -----------------------------------------
 ///
 int PercentChance(float percent){
 /// Generates a random boolean in the form of an int with the value 0 or 1.
@@ -1343,8 +1364,9 @@ int PercentChance(float percent){
 }
 
 
+
 ///
-/// WalkablePiece
+/// WalkablePiece -----------------------------------------
 ///
 int WalkablePiece(int x, int y, int z){
 /// Given determines if a block is empty or not.
@@ -1360,8 +1382,10 @@ int WalkablePiece(int x, int y, int z){
     return count == 0;
 }
 
+
+
 ///
-/// Clamp
+/// Clamp -------------------------------------------------
 ///
 float Clamp(float value, float minVal, float maxVal){
 /// Prevents a value from being bigger than a maxVal, and smaller than a minVal
@@ -1377,8 +1401,9 @@ float Clamp(float value, float minVal, float maxVal){
 }
 
 
+
 ///
-/// DeltaGravity
+/// DeltaGravity ------------------------------------------
 ///
 float DeltaGravity(int lastCollisionTime){
 /// Given a previous GLUT_ELAPSED_TIME, this function will figure out how much
@@ -1393,7 +1418,7 @@ float DeltaGravity(int lastCollisionTime){
 
 
 ///
-/// PrintWallGeneration
+/// PrintWallGeneration -----------------------------------
 ///
 void PrintWallGeneration(){
 /// Prints an ascii version of what walls are closed, and what walls are open.
@@ -1455,7 +1480,7 @@ void PrintWallGeneration(){
 
 
 ///
-/// Pillar_WallCount
+/// Pillar_WallCount --------------------------------------
 ///
 int Pillar_WallCount(Pillar *pillar){
 /// Counts the number of walls on a given pillar that are closed.
@@ -1485,7 +1510,7 @@ int Pillar_WallCount(Pillar *pillar){
 
 
 ///
-/// CountAllWalls
+/// CountAllWalls -----------------------------------------
 ///
 int CountAllWalls(){
 /// Goes through each pillar, and counts how many closed walls there are currently
