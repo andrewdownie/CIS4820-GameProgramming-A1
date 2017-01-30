@@ -16,6 +16,7 @@
 //       |---> BuildWorldShell
 //       |---> SetupWalls
 //       |---> PrintWorldGeneration
+//       |---> CountAllWalls
 //       |---> PlaceWalls
 //       |---> glutMainLoop
 //
@@ -76,7 +77,6 @@ int MAP_SIZE_Z;
 /// Player Settings
 ///
 #define GRAVITY_RATE 9.8f
-
 #define PLAYER_HEIGHT 2
 
 
@@ -281,13 +281,6 @@ void collisionResponse() {
     oldPos_y = curPos_y;
     oldPos_z = curPos_z;
 
-    if(flycontrol == 1){
-      printf("you should be flying meow\n");
-    }
-    else{
-      printf("you should not be flying meow\n");
-    }
-
 
     if(flycontrol == 0){
         for(floorLevel = curIndex_y; floorLevel > 0; floorLevel--){
@@ -349,8 +342,6 @@ void draw2D() {
         set2Dcolour(black);
         draw2Dbox(500, 380, 524, 388);
     } else {
-
-        //DRAW GUI HERE ////////////////////////////////////////////////////////
 
     }
 
@@ -454,18 +445,18 @@ void update() {
 void mouse(int button, int state, int x, int y) {
 
     if (button == GLUT_LEFT_BUTTON)
-    printf("left button - ");
+    //printf("left button - ");
     else if (button == GLUT_MIDDLE_BUTTON)
-    printf("middle button - ");
+    //printf("middle button - ");
     else
-    printf("right button - ");
+    //printf("right button - ");
 
     if (state == GLUT_UP)
-    printf("up - ");
+    //printf("up - ");
     else
-    printf("down - ");
+    //printf("down - ");
 
-    printf("%d %d\n", x, y);
+    //printf("%d %d\n", x, y);
 }
 
 
@@ -1064,8 +1055,7 @@ void ChangeWalls(){
         i++;
 
         if(i > 1000){
-            printf("\tWallcount: %d\n", Pillar_WallCount(currentPillar));
-            printf("!-!-! ERROR: was unable to randomly pick a valid pillar (within 1000 random picks) for wall movement\n");
+            printf("!-!-! ERROR: was unable to randomly pick a valid pillar (within 1000 random picks) for wall movement... Wallcount(%d)\n", Pillar_WallCount(currentPillar));
             return;
         }
     }
@@ -1216,9 +1206,6 @@ void ChangeWalls(){
     if(closedWallCount > 0){
         randClosedWall = rand() % closedWallCount;
     }
-    else{
-        //printf("This pillar has four open walls--------------------\n");
-    }
 
 
 
@@ -1228,9 +1215,6 @@ void ChangeWalls(){
     ///
     if(openWallCount > 0){
         randOpenWall = rand() % openWallCount;
-    }
-    else{
-        //printf("This pillar has four closed walls--------------------\n");
     }
 
 
@@ -1248,9 +1232,6 @@ void ChangeWalls(){
         adjWallToOpen->state = opening;
         adjWallToOpen->direction = adjClosedWallsDir[randClosedWall];
     }
-    else{
-        //printf("Adjacent wall to open was null\n");
-    }
 
 
     ///
@@ -1265,9 +1246,6 @@ void ChangeWalls(){
     if(adjWallToClose != NULL){
         adjWallToClose->state = closing;
         adjWallToClose->direction = adjOpenWallsDir[randOpenWall];
-    }
-    else{
-        //printf("Adjacent wall to close was null\n");
     }
 
 }
@@ -1288,7 +1266,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     /// Error checking
     ///
     if(targetWall == NULL){
-        printf("ERROR!: pointer to targetWall-pointer was null\n");
+        printf("!-!-! ERROR: pointer to targetWall-pointer was null\n");
         return;
     }
 
@@ -1326,8 +1304,6 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///         towards spawning the target number of walls
     currentSpawnPercentage = (100 * ((float)genInfo->wallsCreated / (float)genInfo->creationAttempts));
     genInfo->spawnChanceModifier = genInfo->spawnChance - currentSpawnPercentage;
-
-    //printf("SPAWN CHANCE MODIFIER: %f, %f\n", currentSpawnPercentage, genInfo->spawnChanceModifier);
 
 
 
