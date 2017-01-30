@@ -57,7 +57,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 100
+#define CHANGE_WALLS_TIME_MS 500
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -121,11 +121,9 @@ int lastUpdateTime;
 ///
 Pillar pillars[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 
-int openingWall_x, openingWall_z, closingWall_x, closingWall_z;
+int movingPillar_x, movingPillar_z;
+int closingWall, openingWall;
 float wallPercent;
-
-MovementDirection openingDirection, closingDirection;
-Wall *openingWall, *closingWall;
 
 
 
@@ -136,6 +134,7 @@ Wall *openingWall, *closingWall;
 /// Wall and floor manipulation forward declarations ------
 ///
 void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, int x, int z);
+void AnimateWalls();
 void ChangeWalls();
 void SetupWalls();
 void FreeWalls();
@@ -155,6 +154,7 @@ float Clamp(float value, float minVal, float maxVal);
 float DeltaGravity(int timeSinceLastCollision);
 
 void PrintWallGeneration();
+void PrintWallMovement();
 
 int WalkablePiece(int x, int y, int z);
 int PercentChance(float chance);
@@ -488,42 +488,9 @@ void update() {
 
             //PlaceWalls(deltaWallChangeTime);
 
-            ///
-            /// Animate the walls
-            ///
-            deltaWallChangePercent = (((float)deltaWallChangeTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
-            wallPercent += deltaWallChangePercent;
-            if(wallPercent > 100){
-                wallPercent = 100;
-            }
-
-            if(closingDirection == moveSouth){
-
-                for(z = 0; z < (WALL_LENGTH * wallPercent) / 100; z++){
-                    for(y = 0; y < WALL_HEIGHT; y++){
-                        //world[(closingWall->x + 1) * (WALL_LENGTH+ 1)][y + 1][(closingWall->z * (WALL_LENGTH + 1)) + z + 1] = 5;
-                        world[(closingWall->x + 1) * (WALL_LENGTH + 1)][y + 1][(closingWall->z * (WALL_LENGTH + 1)) + z + 1] = 5;
-                    }
-                }
-
-            }
-            else if(closingDirection == moveNorth){
-                printf("closing north %f\n", (WALL_LENGTH * wallPercent) / 100);
-                for(z = 0; z < (WALL_LENGTH * wallPercent) / 100; z++){
-                  printf("fart\n");
-                    printf("halp %d\n", ((closingWall->z + 1) * (WALL_LENGTH + 1)) - z + 1);
-
-                  //  printf("halp %p\n", (closingWall->z));
-
-                    for(y = 0; y < WALL_HEIGHT; y++){
-
-                      //  world[(closingWall->x + 1) * (WALL_LENGTH+ 1)][y + 1][((closingWall->z) * (WALL_LENGTH + 1)) - z + WALL_LENGTH + 1] = 5;
-                    }
-                }
-
-            }
-
-            printf("done update\n");
+            //printf("start AnimateWalls\n");
+            AnimateWalls();
+            //printf("done AnimateWalls\n");
 
 
 
@@ -1115,24 +1082,15 @@ void ChangeWalls(){
     ///
     /// 1. Setup variables, clear variables
     ///
+    int randOpenWall, randClosedWall;
     int randX, randZ;
     int randomPillar;
 
-    MovementDirection adjOpenWallsDir[4], adjClosedWallsDir[4];
-    MovementDirection openWallsDir[4], closedWallsDir[4];
-
-    Wall *adjOpenWalls[4], *adjClosedWalls[4];
-    Wall *openWalls[4], *closedWalls[4];
-
-    Wall *adjWallToClose, *adjWallToOpen;
-    Wall *wallToClose, *wallToOpen;
-
-
+    int *openWalls[4], *closedWalls[4];
     Pillar *currentPillar;
 
 
     int openWallCount = 0, closedWallCount = 0;
-    int randOpenWall = 0, randClosedWall = 0;
     int i;
 
     for(i = 0; i < 4; i++){
@@ -1163,6 +1121,8 @@ void ChangeWalls(){
         }
 
         currentPillar = &(pillars[randX][randZ]);
+        movingPillar_x = randX;
+        movingPillar_z = randZ;
 
 
         if(Pillar_WallCount(currentPillar) != 0 && Pillar_WallCount(currentPillar) != 4){
@@ -1180,29 +1140,23 @@ void ChangeWalls(){
 
 
 
+
+
     ///
     /// 3. For the current pillar: create a list of open walls, and a list of
     ///        closed walls.
     ///    Track how the adjacent pillars should be affected for each wall on
     ///          each list (as most walls are attached to two pillars).
     ///
-    wallToOpen = NULL;
-    wallToClose = NULL;
-    adjWallToOpen = NULL;
-    adjWallToClose = NULL;
 
 
     if(currentPillar->wall[north]->state == closed){
-        closedWalls[closedWallCount] = currentPillar->wall[north];
-        closedWallsDir[closedWallCount] = moveSouth;
-        //closedWallsDir[closedWallCount] = moveNorth;
+        closedWalls[closedWallCount] = north;
 
         closedWallCount++;
     }
     else if(currentPillar->wall[north]->state == open){
-        openWalls[openWallCount] = currentPillar->wall[north];
-        openWallsDir[openWallCount] = moveNorth;
-        //openWallsDir[openWallCount] = moveSouth;
+        openWalls[openWallCount] = north;
 
         openWallCount++;
     }
@@ -1210,16 +1164,12 @@ void ChangeWalls(){
 
 
     if(currentPillar->wall[south]->state == closed){
-        closedWalls[closedWallCount] = currentPillar->wall[south];
-        //closedWallsDir[closedWallCount] = moveNorth;
-        closedWallsDir[closedWallCount] = moveNorth;
+        closedWalls[closedWallCount] = south;
 
         closedWallCount++;
     }
     else if(currentPillar->wall[south]->state == open){
-        openWalls[openWallCount] = currentPillar->wall[south];
-        //openWallsDir[openWallCount] = moveSouth;
-        closedWallsDir[closedWallCount] = moveSouth;
+        openWalls[openWallCount] = south;
 
         openWallCount++;
     }
@@ -1227,28 +1177,24 @@ void ChangeWalls(){
 
 
     if(currentPillar->wall[east]->state == closed){
-        closedWalls[closedWallCount] = currentPillar->wall[east];
-        closedWallsDir[closedWallCount] = moveWest;
+        closedWalls[closedWallCount] = east;
 
         closedWallCount++;
     }
     else if(currentPillar->wall[east]->state == open){
-        openWalls[openWallCount] = currentPillar->wall[east];
-        openWallsDir[openWallCount] = moveEast;
+        openWalls[openWallCount] = east;
 
         openWallCount++;
     }
 
 
     if(currentPillar->wall[west]->state == closed){
-        closedWalls[closedWallCount] = currentPillar->wall[west];
-        closedWallsDir[closedWallCount] = moveEast;
+        closedWalls[closedWallCount] = west;
 
         closedWallCount++;
     }
     else if(currentPillar->wall[west]->state == open){
-        openWalls[openWallCount] = currentPillar->wall[west];
-        openWallsDir[openWallCount] = moveWest;
+        openWalls[openWallCount] = west;
 
         openWallCount++;
     }
@@ -1256,39 +1202,23 @@ void ChangeWalls(){
 
 
     ///
-    /// 4. Pick a random closed wall, from the closedWall list
+    /// Pick the walls to open / close
     ///
     if(closedWallCount > 0){
         randClosedWall = rand() % closedWallCount;
     }
 
 
-
-
-    ///
-    /// 5. Pick a random open wall from the openWall list
-    ///
     if(openWallCount > 0){
         randOpenWall = rand() % openWallCount;
     }
 
-
-
-    ///
-    /// 6. Set the selected closed wall to open
-    ///
-
     openingWall = closedWalls[randClosedWall];
-    openingDirection = closedWallsDir[randClosedWall];
-
-
-    ///
-    /// 7. Set the selected open wall to close
-    ///
-    closingWall  = openWalls[randOpenWall];
-    closingDirection = openWallsDir[randOpenWall];
+    closingWall = openWalls[randOpenWall];
 
     wallPercent = 0;
+
+    PrintWallMovement();
 
 }
 
@@ -1363,6 +1293,14 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
     }
 }
 
+
+
+///
+/// AnimateWalls
+///
+void AnimateWalls(){
+
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1500,6 +1438,20 @@ void PrintWallGeneration(){
         }
         putchar('\n');
     }
+
+}
+
+
+
+///
+/// PrintWallMovement
+///
+void PrintWallMovement(){
+    printf("Wall movement info:\n");
+    printf("\tSelected pillar (%d, %d)\n", movingPillar_x, movingPillar_z);
+    printf("\tOpening wall: %d\n", openingWall);
+    printf("\tClosing wall: %d\n", closingWall);
+    printf("\tWall percent: %f\n", wallPercent);
 
 }
 
