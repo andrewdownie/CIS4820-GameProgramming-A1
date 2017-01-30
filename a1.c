@@ -640,8 +640,8 @@ void BuildWorldShell(){
     ///
     /// Create the pillars
     ///
-    for(x = 1; x < WALL_COUNT_X; x++){
-        for(z = 1; z < WALL_COUNT_Z; z++){
+    for(x = 0; x < WALL_COUNT_X + 1; x++){
+        for(z = 0; z < WALL_COUNT_Z + 1; z++){
 
             for(height = 0; height < WALL_HEIGHT; height++){
                 world[x * (WALL_LENGTH + 1)][1 + height][z * (WALL_LENGTH + 1)] = PILLAR_COLOUR;
