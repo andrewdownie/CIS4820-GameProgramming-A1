@@ -58,7 +58,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 1500
+#define CHANGE_WALLS_TIME_MS 300
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -1121,7 +1121,7 @@ void ChangeWalls(){
 
     PlacePillars();
     for(y = 0; y < WALL_HEIGHT; y++){
-        world[(movingPillar_x + 1) * (WALL_LENGTH + 1)][y + 1][(movingPillar_z + 1) * (WALL_LENGTH + 1)] = FLOOR_COLOUR;
+        world[(movingPillar_x + 1) * (WALL_LENGTH + 1)][y + 1][(movingPillar_z + 1) * (WALL_LENGTH + 1)] = OUTER_WALL_COLOUR;
     }
 }
 
@@ -1232,6 +1232,7 @@ void AnimateWalls(int deltaTime){
     startX = (selectedPillar->wall[closingWall]->x + 1) * (WALL_LENGTH + 1);
     startZ = (selectedPillar->wall[closingWall]->z + 1) * (WALL_LENGTH + 1);
 
+
     for(y = 0; y < WALL_HEIGHT; y++){
       ///
       /// Close wall
@@ -1239,23 +1240,22 @@ void AnimateWalls(int deltaTime){
       if(closingWall == north){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-              world[startX][1 + y][startZ - cur_z - 1] = INNER_WALL_COLOUR;
+             // world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = INNER_WALL_COLOUR;
           }
       }
       else if(closingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-              world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
+             // world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
       }
-      else if(closingWall = south){
+      else if(closingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-              world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
+            //  world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
           }
       }
-      else if(closingWall == west){//TODO: west does not work???
-
+      else if(closingWall == west){
           for(cur_x = 0; cur_x < actualLength; cur_x++){
               world[startX - cur_x - 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
@@ -1268,25 +1268,25 @@ void AnimateWalls(int deltaTime){
       if(openingWall == north){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-              world[startX][1 + y][startZ + cur_z - WALL_LENGTH] = 0;
+            //  world[startX][1 + y][startZ + cur_z - WALL_LENGTH] = 0;
           }
       }
       else if(openingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-              world[startX + cur_x + 1][1 + y][startZ] = 0;
+             // world[startX + cur_x + 1][1 + y][startZ] = 0;
           }
       }
-      else if(openingWall = south){
+      else if(openingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-              world[startX][1 + y][startZ + cur_z + 1] = 0;
+             // world[startX][1 + y][startZ + cur_z + 1] = 0;
           }
       }
       else if(openingWall == west){//TODO: west does not work???
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-              world[startX - cur_x - 1][1 + y][startZ] = 0;
+            //  world[startX - cur_x - 1][1 + y][startZ] = 0;
           }
       }
 
