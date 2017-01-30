@@ -57,7 +57,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 1500
+#define CHANGE_WALLS_TIME_MS 100
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -71,6 +71,11 @@
 #define WALL_COUNT_Z 6
 #define WALL_LENGTH 5
 #define WALL_HEIGHT 2
+
+#define north 0
+#define east 1
+#define south 2
+#define west 3
 
 
 
@@ -116,12 +121,21 @@ int lastUpdateTime;
 ///
 Pillar pillars[WALL_COUNT_X - 1][WALL_COUNT_Z - 1];
 
+int openingWall_x, openingWall_z, closingWall_x, closingWall_z;
+float wallPercent;
+
+MovementDirection openingDirection, closingDirection;
+Wall *openingWall, *closingWall;
+
+
+
+
 
 
 ///
 /// Wall and floor manipulation forward declarations ------
 ///
-void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo);
+void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, int x, int z);
 void ChangeWalls();
 void SetupWalls();
 void FreeWalls();
@@ -401,6 +415,7 @@ void draw2D() {
 void update() {
 /// Background process, it is called when there are no other events.
 
+
     /* sample animation for the test world, don't remove this code */
     /* -demo of animating mobs */
     if (testWorld) {
@@ -457,6 +472,8 @@ void update() {
 
     } else {
         int currentElapsedTime, deltaWallChangeTime;
+        int x, z, y;
+        float deltaWallChangePercent;
 
         if(AUTO_CHANGE_WALLS){
             currentElapsedTime = glutGet(GLUT_ELAPSED_TIME);
@@ -467,10 +484,50 @@ void update() {
             if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
                 lastWallChangeTime = 0;
                 ChangeWalls();
+            }
+
+            //PlaceWalls(deltaWallChangeTime);
+
+            ///
+            /// Animate the walls
+            ///
+            deltaWallChangePercent = (((float)deltaWallChangeTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
+            wallPercent += deltaWallChangePercent;
+            if(wallPercent > 100){
+                wallPercent = 100;
+            }
+
+            if(closingDirection == moveSouth){
+
+                for(z = 0; z < (WALL_LENGTH * wallPercent) / 100; z++){
+                    for(y = 0; y < WALL_HEIGHT; y++){
+                        //world[(closingWall->x + 1) * (WALL_LENGTH+ 1)][y + 1][(closingWall->z * (WALL_LENGTH + 1)) + z + 1] = 5;
+                        world[(closingWall->x + 1) * (WALL_LENGTH + 1)][y + 1][(closingWall->z * (WALL_LENGTH + 1)) + z + 1] = 5;
+                    }
+                }
+
+            }
+            else if(closingDirection == moveNorth){
+                printf("closing north %f\n", (WALL_LENGTH * wallPercent) / 100);
+                for(z = 0; z < (WALL_LENGTH * wallPercent) / 100; z++){
+                  printf("fart\n");
+                    printf("halp %d\n", ((closingWall->z + 1) * (WALL_LENGTH + 1)) - z + 1);
+
+                  //  printf("halp %p\n", (closingWall->z));
+
+                    for(y = 0; y < WALL_HEIGHT; y++){
+
+                      //  world[(closingWall->x + 1) * (WALL_LENGTH+ 1)][y + 1][((closingWall->z) * (WALL_LENGTH + 1)) - z + WALL_LENGTH + 1] = 5;
+                    }
+                }
 
             }
 
-            PlaceWalls(deltaWallChangeTime);
+            printf("done update\n");
+
+
+
+
 
 
             lastUpdateTime = glutGet(GLUT_ELAPSED_TIME);
@@ -559,6 +616,11 @@ int main(int argc, char** argv)
         createPlayer(0, 52.0, 27.0, 52.0, 0.0);
 
     } else {
+
+        ///
+        /// Dont buffer anything for debugging
+        ///
+        setvbuf(stdout, NULL, _IONBF, 0);
 
         flycontrol = 0;
 
@@ -725,10 +787,10 @@ void SetupWalls(){
     ///
     for(x = 0; x < WALL_COUNT_X; x++){
         for(z = 0; z < WALL_COUNT_Z; z++){
-            pillars[x][z].north = NULL;
-            pillars[x][z].south = NULL;
-            pillars[x][z].east = NULL;
-            pillars[x][z].west = NULL;
+            pillars[x][z].wall[north] = NULL;
+            pillars[x][z].wall[south] = NULL;
+            pillars[x][z].wall[east] = NULL;
+            pillars[x][z].wall[west] = NULL;
         }
     }
 
@@ -741,11 +803,11 @@ void SetupWalls(){
             ///
             if(z > 0){
                 if(Pillar_WallCount( &(pillars[x][z - 1]) ) < 3){
-                    SetupWall( &(pillars[x][z].north), &(pillars[x][z - 1].south), &genInfo);
+                    SetupWall( &(pillars[x][z].wall[north]), &(pillars[x][z - 1].wall[south]), &genInfo, x, z);
                 }
             }
             else{
-                SetupWall( &(pillars[x][z].north), NULL, &genInfo);
+                SetupWall( &(pillars[x][z].wall[north]), NULL, &genInfo, x, z);
             }
 
 
@@ -754,11 +816,11 @@ void SetupWalls(){
             ///
             if(z < WALL_COUNT_Z){
                 if(Pillar_WallCount( &(pillars[x][z + 1]) ) < 3){
-                    SetupWall( &(pillars[x][z].south), &(pillars[x][z + 1].north), &genInfo);
+                    SetupWall( &(pillars[x][z].wall[south]), &(pillars[x][z + 1].wall[north]), &genInfo, x, z);
                 }
             }
             else{
-                SetupWall( &(pillars[x][z].south), NULL, &genInfo);
+                SetupWall( &(pillars[x][z].wall[south]), NULL, &genInfo, x, z);
             }
 
 
@@ -767,11 +829,11 @@ void SetupWalls(){
             ///
             if(x < WALL_COUNT_X - 1){
                 if(Pillar_WallCount( &(pillars[x + 1][z]) ) < 3){
-                    SetupWall( &(pillars[x][z].east), &(pillars[x + 1][z].west), &genInfo);
+                    SetupWall( &(pillars[x][z].wall[east]), &(pillars[x + 1][z].wall[west]), &genInfo, x, z);
                 }
             }
             else{
-                SetupWall( &(pillars[x][z].east), NULL, &genInfo);
+                SetupWall( &(pillars[x][z].wall[east]), NULL, &genInfo, x, z);
             }
 
 
@@ -780,11 +842,11 @@ void SetupWalls(){
             ///
             if(x > 0){
                 if(Pillar_WallCount( &(pillars[x - 1][z]) ) < 3){
-                    SetupWall( &(pillars[x][z].west), &(pillars[x - 1][z].east), &genInfo);
+                    SetupWall( &(pillars[x][z].wall[west]), &(pillars[x - 1][z].wall[east]), &genInfo, x, z);
                 }
             }
             else{
-                SetupWall( &(pillars[x][z].west), NULL, &genInfo);
+                SetupWall( &(pillars[x][z].wall[west]), NULL, &genInfo, x, z);
             }
 
 
@@ -794,8 +856,8 @@ void SetupWalls(){
 
     }
 
-    pillars[0][0].west->percentClosed = 0;
-    pillars[0][0].west->state = open;
+    pillars[0][0].wall[west]->percentClosed = 0;
+    pillars[0][0].wall[west]->state = open;
 
 }
 
@@ -811,14 +873,14 @@ void FreeWalls(){
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             if(x == 0){
-                free(pillars[z][x].west);
+                free(pillars[z][x].wall[west]);
             }
             if(z == 0){
-                free(pillars[z][x].north);
+                free(pillars[z][x].wall[north]);
             }
 
-            free(pillars[z][x].east);
-            free(pillars[z][x].south);
+            free(pillars[z][x].wall[east]);
+            free(pillars[z][x].wall[south]);
         }
     }
 
@@ -886,12 +948,14 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
         for(z = 0; z < actualWallLength; z++){
 
             if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
+          //  if(wall->state == closing){
                 world[wallX][1 + yOffset][wallZ + z] = INNER_WALL_COLOUR;
             }
             else{
                 world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = INNER_WALL_COLOUR;
             }
 
+            /// Handle: hitting the player
             getViewPosition(&playerXf, &playerYf, &playerZf);
             playerX = (int)playerXf * -1;
             playerY = (int)playerYf * -1;
@@ -984,7 +1048,7 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
                 world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = INNER_WALL_COLOUR;
             }
 
-
+            /// Handle: hitting the player
             getViewPosition(&playerXf, &playerYf, &playerZf);
             playerX = (int)playerXf * -1;
             playerY = (int)playerYf * -1;
@@ -1018,14 +1082,14 @@ void PlaceWalls(int deltaTime){
     for(x = 0; x < WALL_COUNT_X - 1; x++){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             if(x == 0){
-                PlaceHorizontalWall(pillars[x][z].west, 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
+                PlaceHorizontalWall(pillars[x][z].wall[west], 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
             }
             if(z == 0){
-                PlaceVerticalWall(pillars[x][z].north, (WALL_LENGTH + 1) * (x + 1), 1, deltaTime);
+                PlaceVerticalWall(pillars[x][z].wall[north], (WALL_LENGTH + 1) * (x + 1), 1, deltaTime);
             }
 
-            PlaceHorizontalWall(pillars[x][z].east, (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
-            PlaceVerticalWall(pillars[x][z].south, (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1, deltaTime);
+            PlaceHorizontalWall(pillars[x][z].wall[east], (x + 1) * (WALL_LENGTH + 1) + 1, (WALL_LENGTH + 1) * (z + 1), deltaTime);
+            PlaceVerticalWall(pillars[x][z].wall[south], (WALL_LENGTH + 1) * (x + 1), (z + 1) * (WALL_LENGTH + 1) + 1, deltaTime);
         }
     }
 
@@ -1104,8 +1168,8 @@ void ChangeWalls(){
         if(Pillar_WallCount(currentPillar) != 0 && Pillar_WallCount(currentPillar) != 4){
             break;
         }
-        i++;
 
+        i++;
         if(i > 1000){
             printf("!-!-! ERROR: was unable to randomly pick a valid pillar (within 1000 random picks) for wall movement... Wallcount(%d)\n", Pillar_WallCount(currentPillar));
             return;
@@ -1128,124 +1192,63 @@ void ChangeWalls(){
     adjWallToClose = NULL;
 
 
-    if(currentPillar->north->state == closed){
-        closedWalls[closedWallCount] = currentPillar->north;
+    if(currentPillar->wall[north]->state == closed){
+        closedWalls[closedWallCount] = currentPillar->wall[north];
         closedWallsDir[closedWallCount] = moveSouth;
-
-
-        if(randZ > 0){
-            adjClosedWalls[closedWallCount] = pillars[randX][randZ - 1].south;
-            adjClosedWallsDir[closedWallCount] = moveNorth;
-        }
-        else{
-            adjClosedWalls[closedWallCount] = NULL;
-        }
+        //closedWallsDir[closedWallCount] = moveNorth;
 
         closedWallCount++;
     }
-    else{
-        openWalls[openWallCount] = currentPillar->north;
+    else if(currentPillar->wall[north]->state == open){
+        openWalls[openWallCount] = currentPillar->wall[north];
         openWallsDir[openWallCount] = moveNorth;
-
-        if(randZ > 0){
-            adjOpenWalls[openWallCount] = pillars[randX][randZ - 1].south;
-            adjOpenWallsDir[openWallCount] = moveSouth;
-        }
-        else{
-            adjOpenWalls[openWallCount] = NULL;
-        }
+        //openWallsDir[openWallCount] = moveSouth;
 
         openWallCount++;
     }
 
 
 
-    if(currentPillar->south->state == closed){
-        closedWalls[closedWallCount] = currentPillar->south;
+    if(currentPillar->wall[south]->state == closed){
+        closedWalls[closedWallCount] = currentPillar->wall[south];
+        //closedWallsDir[closedWallCount] = moveNorth;
         closedWallsDir[closedWallCount] = moveNorth;
 
-        if(randZ < WALL_COUNT_Z - 2){
-            adjClosedWalls[closedWallCount] = pillars[randX][randZ + 1].north;
-            adjClosedWallsDir[closedWallCount] = moveSouth;
-        }
-        else{
-            adjClosedWalls[closedWallCount] = NULL;
-        }
-
         closedWallCount++;
     }
-    else{
-        openWalls[openWallCount] = currentPillar->south;
-        openWallsDir[openWallCount] = moveSouth;
-
-        if(randZ < WALL_COUNT_Z - 2){
-            adjOpenWalls[openWallCount] = pillars[randX][randZ + 1].north;
-            adjOpenWallsDir[openWallCount] = moveNorth;
-        }
-        else{
-            adjOpenWalls[openWallCount] = NULL;
-        }
+    else if(currentPillar->wall[south]->state == open){
+        openWalls[openWallCount] = currentPillar->wall[south];
+        //openWallsDir[openWallCount] = moveSouth;
+        closedWallsDir[closedWallCount] = moveSouth;
 
         openWallCount++;
     }
 
 
 
-    if(currentPillar->east->state == closed){
-        closedWalls[closedWallCount] = currentPillar->east;
+    if(currentPillar->wall[east]->state == closed){
+        closedWalls[closedWallCount] = currentPillar->wall[east];
         closedWallsDir[closedWallCount] = moveWest;
 
-        if(randX < WALL_COUNT_X - 2){
-            adjClosedWalls[closedWallCount] = pillars[randX + 1][randZ].west;
-            adjClosedWallsDir[closedWallCount] = moveEast;
-        }
-        else{
-            adjClosedWalls[closedWallCount] = NULL;
-        }
-
         closedWallCount++;
     }
-    else{
-        openWalls[openWallCount] = currentPillar->east;
+    else if(currentPillar->wall[east]->state == open){
+        openWalls[openWallCount] = currentPillar->wall[east];
         openWallsDir[openWallCount] = moveEast;
-
-        if(randX < WALL_COUNT_X - 2){
-            adjOpenWalls[openWallCount] = pillars[randX + 1][randZ].west;
-            adjOpenWallsDir[openWallCount] = moveWest;
-        }
-        else{
-            adjOpenWalls[openWallCount] = NULL;
-        }
 
         openWallCount++;
     }
 
 
-    if(currentPillar->west->state == closed){
-        closedWalls[closedWallCount] = currentPillar->west;
+    if(currentPillar->wall[west]->state == closed){
+        closedWalls[closedWallCount] = currentPillar->wall[west];
         closedWallsDir[closedWallCount] = moveEast;
-
-        if(randX > 0){
-            adjClosedWalls[closedWallCount] = pillars[randX - 1][randZ].east;
-            adjClosedWallsDir[closedWallCount] = moveWest;
-        }
-        else{
-            adjClosedWalls[closedWallCount] = NULL;
-        }
 
         closedWallCount++;
     }
-    else{
-        openWalls[openWallCount] = currentPillar->west;
+    else if(currentPillar->wall[west]->state == open){
+        openWalls[openWallCount] = currentPillar->wall[west];
         openWallsDir[openWallCount] = moveWest;
-
-        if(randX > 0){
-            adjOpenWalls[openWallCount] = pillars[randX - 1][randZ].east;
-            adjOpenWallsDir[openWallCount] = moveEast;
-        }
-        else{
-            adjOpenWalls[openWallCount] = NULL;
-        }
 
         openWallCount++;
     }
@@ -1274,31 +1277,18 @@ void ChangeWalls(){
     ///
     /// 6. Set the selected closed wall to open
     ///
-    wallToOpen = closedWalls[randClosedWall];
-    wallToOpen->direction = closedWallsDir[randClosedWall];
-    wallToOpen->state = opening;
 
-
-    adjWallToOpen = adjClosedWalls[randClosedWall];
-    if(adjWallToOpen != NULL){
-        adjWallToOpen->state = opening;
-        adjWallToOpen->direction = adjClosedWallsDir[randClosedWall];
-    }
+    openingWall = closedWalls[randClosedWall];
+    openingDirection = closedWallsDir[randClosedWall];
 
 
     ///
     /// 7. Set the selected open wall to close
     ///
-    wallToClose = openWalls[randOpenWall];
-    wallToClose->direction = closedWallsDir[randClosedWall];
-    wallToClose->state = closing;
+    closingWall  = openWalls[randOpenWall];
+    closingDirection = openWallsDir[randOpenWall];
 
-
-    adjWallToClose = adjOpenWalls[randOpenWall];
-    if(adjWallToClose != NULL){
-        adjWallToClose->state = closing;
-        adjWallToClose->direction = adjOpenWallsDir[randOpenWall];
-    }
+    wallPercent = 0;
 
 }
 
@@ -1307,7 +1297,7 @@ void ChangeWalls(){
 ///
 /// SetupWall ---------------------------------------------
 ///
-void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
+void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, int x, int z){
 /// Mallocs memory for a wall. Then randomly decides if that wall should be
 ///         created opened or closed. Tracks whether a wall was created opened
 ///         or closed using the genInfo struct passed in.
@@ -1335,6 +1325,9 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo){
     ///
     Wall *newWall = (Wall*)malloc(sizeof(Wall));
     newWall->direction = notMoving;
+    newWall->x = x;
+    newWall->z = z;
+
     genInfo->creationAttempts++;
 
 
@@ -1468,7 +1461,7 @@ void PrintWallGeneration(){
             putchar(' ');
 
 
-            if(pillars[x][z].north->state == closed){
+            if(pillars[x][z].wall[north]->state == closed){
                 putchar('|');
             }
             else{
@@ -1479,14 +1472,14 @@ void PrintWallGeneration(){
         putchar('\n');
 
         for(x = 0; x < WALL_COUNT_X - 1; x++){
-            if(pillars[x][z].west->state == closed){
+            if(pillars[x][z].wall[west]->state == closed){
                 putchar('-');
             }
             else{
                 putchar(' ');
             }
             putchar('+');
-            if(pillars[x][z].east->state == closed){
+            if(pillars[x][z].wall[east]->state == closed){
                 putchar('-');
             }
             else{
@@ -1497,7 +1490,7 @@ void PrintWallGeneration(){
 
         for(x = 0; x < WALL_COUNT_X - 1; x++){
             putchar(' ');
-            if(pillars[x][z].south->state == closed){
+            if(pillars[x][z].wall[south]->state == closed){
                 putchar('|');
             }
             else{
@@ -1520,19 +1513,19 @@ int Pillar_WallCount(Pillar *pillar){
 
     int count = 0;
 
-    if(pillar->north != NULL && pillar->north->state == closed){
+    if(pillar->wall[north] != NULL && pillar->wall[north]->state == closed){
         count++;
     }
 
-    if(pillar->east != NULL && pillar->east->state == closed){
+    if(pillar->wall[east] != NULL && pillar->wall[east]->state == closed){
         count++;
     }
 
-    if(pillar->south != NULL && pillar->south->state == closed){
+    if(pillar->wall[south] != NULL && pillar->wall[south]->state == closed){
         count++;
     }
 
-    if(pillar->west != NULL && pillar->west->state == closed){
+    if(pillar->wall[west] != NULL && pillar->wall[west]->state == closed){
         count++;
     }
 
@@ -1558,19 +1551,19 @@ int CountAllWalls(){
         for(z = 0; z < WALL_COUNT_Z - 1; z++){
             currentPillar = &(pillars[x][z]);
 
-            if(x == 0 && (currentPillar->west->state == closed || currentPillar->west->state == closing)){
+            if(x == 0 && (currentPillar->wall[west]->state == closed || currentPillar->wall[west]->state == closing)){
                 count++;
             }
 
-            if(z == 0 &&  (currentPillar->north->state == closed || currentPillar->north->state == closing)){
+            if(z == 0 &&  (currentPillar->wall[north]->state == closed || currentPillar->wall[north]->state == closing)){
                 count++;
             }
 
-            if( (currentPillar->east->state == closed || currentPillar->east->state == closing)){
+            if( (currentPillar->wall[east]->state == closed || currentPillar->wall[east]->state == closing)){
                 count++;
             }
 
-            if( (currentPillar->south->state == closed || currentPillar->south->state == closing)){
+            if( (currentPillar->wall[south]->state == closed || currentPillar->wall[south]->state == closing)){
                 count++;
             }
         }

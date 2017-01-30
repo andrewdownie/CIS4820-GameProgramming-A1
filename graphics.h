@@ -38,10 +38,13 @@ typedef struct _Wall{
     float percentClosed;
     MovementDirection direction;
     WallState state;
+    int x, z;
 } Wall;
 
 typedef struct _Pillar{
-    Wall *north, *south, *east, *west;
+    //Wall *north, *south, *east, *west;
+
+    Wall *wall[4];
 } Pillar;
 
 typedef struct _GenerationInfo{
