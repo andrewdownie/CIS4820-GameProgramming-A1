@@ -281,6 +281,13 @@ void collisionResponse() {
     oldPos_y = curPos_y;
     oldPos_z = curPos_z;
 
+    if(flycontrol == 1){
+      printf("you should be flying meow\n");
+    }
+    else{
+      printf("you should not be flying meow\n");
+    }
+
 
     if(flycontrol == 0){
         for(floorLevel = curIndex_y; floorLevel > 0; floorLevel--){
@@ -515,6 +522,8 @@ int main(int argc, char** argv)
         createPlayer(0, 52.0, 27.0, 52.0, 0.0);
 
     } else {
+
+        flycontrol = 0;
 
         ///
         /// initialize random
@@ -794,10 +803,6 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     float playerXf, playerYf, playerZf;
     int playerX, playerY, playerZ;
 
-    if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
-        //return;
-    }
-
 
     ///
     /// Clear the wall first
@@ -885,9 +890,6 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
     float playerXf, playerYf, playerZf;
     int playerX, playerY, playerZ;
 
-    if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
-        //return;
-    }
 
     ///
     /// Clear the wall first
@@ -1480,7 +1482,7 @@ void PrintWallGeneration(){
 /// Pillar_WallCount
 ///
 int Pillar_WallCount(Pillar *pillar){
-/// Counts the number of walls on a given pillar are closed.
+/// Counts the number of walls on a given pillar that are closed.
 
     int count = 0;
 
