@@ -562,7 +562,7 @@ void display (void)
             void keyboard(unsigned char key, int x, int y)
             {
                 float rotx, roty;
-                static int lighton = 1;
+        //        static int lighton = 1;
 
                 switch (key) {
                     case 27:
