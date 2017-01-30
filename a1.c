@@ -49,7 +49,7 @@
 ///
 /// Wall and floor settings
 ///
-#define CHANGE_WALLS_TIME_MS 1000
+#define CHANGE_WALLS_TIME_MS 100
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -788,11 +788,11 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 ///      change in length, which results in the walls appearing to be animated.
 
     int actualWallLength;
-    int yOffset, z;
+    int yOffset, z, y;
     int deltaPercent;
 
     float playerXf, playerYf, playerZf;
-    int playerX, playerZ;
+    int playerX, playerY, playerZ;
 
     if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
         //return;
@@ -847,11 +847,15 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 
             getViewPosition(&playerXf, &playerYf, &playerZf);
             playerX = (int)playerXf * -1;
+            playerY = (int)playerYf * -1;
             playerZ = (int)playerZf * -1;
 
-            if(playerX == wallX && playerZ == wallZ + z){
-                setViewPosition(playerXf + 1, playerYf, playerZf);
+            for(y = 0; y < WALL_HEIGHT; y++){
+                if(playerX == wallX && playerZ == wallZ + z && y + 1 == playerY){
+                    setViewPosition(playerXf + 1, playerYf, playerZf);
+                }
             }
+
 
         }
 
@@ -875,11 +879,11 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 ///      change in length, which results in the walls appearing to be animated.
 
     int actualWallLength;
-    int yOffset, x;
+    int yOffset, x, y;
     float deltaPercent;
 
     float playerXf, playerYf, playerZf;
-    int playerX, playerZ;
+    int playerX, playerY, playerZ;
 
     if(deltaTime > 0 && (wall->state == open || wall->state == closed)){
         //return;
@@ -939,11 +943,15 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 
             getViewPosition(&playerXf, &playerYf, &playerZf);
             playerX = (int)playerXf * -1;
+            playerY = (int)playerYf * -1;
             playerZ = (int)playerZf * -1;
 
-            if(playerX == wallX + x && playerZ == wallZ){
-                setViewPosition(playerXf, playerYf, playerZf - 1);
+            for(y = 0; y < WALL_HEIGHT; y++){
+                if(playerX == wallX + x && playerZ == wallZ && y + 1 ==  playerY){
+                    setViewPosition(playerXf, playerYf, playerZf - 1);
+                }
             }
+
 
         }
 
