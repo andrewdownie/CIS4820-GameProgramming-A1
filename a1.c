@@ -57,7 +57,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 500
+#define CHANGE_WALLS_TIME_MS 400
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -481,21 +481,21 @@ void update() {
 
             lastWallChangeTime += deltaWallChangeTime;
 
-            if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
-                lastWallChangeTime = 0;
-                ChangeWalls();
-            }
 
             //PlaceWalls(deltaWallChangeTime);
 
             //printf("start AnimateWalls\n");
-            AnimateWalls();
+            AnimateWalls(deltaWallChangeTime);
             //printf("done AnimateWalls\n");
 
 
 
 
 
+            if(lastWallChangeTime >= CHANGE_WALLS_TIME_MS){
+                lastWallChangeTime = 0;
+                ChangeWalls();
+            }
 
             lastUpdateTime = glutGet(GLUT_ELAPSED_TIME);
         }
@@ -823,7 +823,6 @@ void SetupWalls(){
 
     }
 
-    pillars[0][0].wall[west]->percentClosed = 0;
     pillars[0][0].wall[west]->state = open;
 
 }
@@ -867,76 +866,19 @@ void PlaceVerticalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 /// Uses "deltaTime" to figure out how much an opening or closing wall should be
 ///      change in length, which results in the walls appearing to be animated.
 
-    int actualWallLength;
-    int yOffset, z, y;
-    int deltaPercent;
-
-    float playerXf, playerYf, playerZf;
-    int playerX, playerY, playerZ;
-
-
-    ///
-    /// Clear the wall first
-    ///
-    for(z = 0; z < WALL_LENGTH; z++){
-
-        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
-            world[wallX][1 + yOffset][wallZ + z] = 0;
-        }
-
-    }
-
-
-    ///
-    /// Update the wall using deltaTime
-    ///
-    deltaPercent = (((float)deltaTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
-    if(wall->state == opening){
-        wall->percentClosed -= deltaPercent;
-        if(wall->percentClosed < 0){
-            wall->percentClosed = 0;
-            wall->state = open;
-        }
-    }
-    else if(wall->state == closing){
-        wall->percentClosed += deltaPercent;
-        if(wall->percentClosed > 100){
-            wall->percentClosed = 100;
-            wall->state = closed;
-        }
-    }
-
+    int yOffset, z;
 
     ///
     /// Place the wall
     ///
-    actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
-        for(z = 0; z < actualWallLength; z++){
+        for(z = 0; z < WALL_LENGTH; z++){
 
-            if( (wall->direction == moveNorth && wall->state == closing) || (wall->direction == moveSouth && wall->state == opening) ){
-          //  if(wall->state == closing){
+            if(wall->state == closed){
                 world[wallX][1 + yOffset][wallZ + z] = INNER_WALL_COLOUR;
             }
-            else{
-                world[wallX][1 + yOffset][wallZ + WALL_LENGTH - z - 1] = INNER_WALL_COLOUR;
-            }
-
-            /// Handle: hitting the player
-            getViewPosition(&playerXf, &playerYf, &playerZf);
-            playerX = (int)playerXf * -1;
-            playerY = (int)playerYf * -1;
-            playerZ = (int)playerZf * -1;
-
-            for(y = 0; y < WALL_HEIGHT; y++){
-                if(playerX == wallX && playerZ == wallZ + z && y + 1 == playerY){
-                    setViewPosition(playerXf + 1, playerYf, playerZf);
-                }
-            }
-
 
         }
-
 
     }
 
@@ -956,77 +898,17 @@ void PlaceHorizontalWall(Wall *wall, int wallX, int wallZ, int deltaTime){
 /// Uses "deltaTime" to figure out how much an opening or closing wall should be
 ///      change in length, which results in the walls appearing to be animated.
 
-    int actualWallLength;
-    int yOffset, x, y;
-    float deltaPercent;
-
-    float playerXf, playerYf, playerZf;
-    int playerX, playerY, playerZ;
-
-
-    ///
-    /// Clear the wall first
-    ///
-    for(x = 0; x < WALL_LENGTH; x++){
-
-        for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
-            world[wallX + x][1 + yOffset][wallZ] = 0;
-        }
-
-    }
-
-
-
-    ///
-    /// Update the wall using deltaTime
-    ///
-    deltaPercent = (((float)deltaTime * 2) / (float)CHANGE_WALLS_TIME_MS) * 100;
-    if(wall->state == opening){
-        wall->percentClosed -= deltaPercent;
-
-        if(wall->percentClosed <= 0){
-            wall->percentClosed = 0;
-            wall->state = open;
-        }
-
-    }
-    else if(wall->state == closing){
-        wall->percentClosed += deltaPercent;
-
-        if(wall->percentClosed > 100){
-            wall->percentClosed = 100;
-            wall->state = closed;
-        }
-
-    }
-
+    int yOffset, x;
 
     ///
     /// Place the wall
     ///
-    actualWallLength = (WALL_LENGTH * wall->percentClosed) / 100;
     for(yOffset = 0; yOffset < WALL_HEIGHT; yOffset++){
-        for(x = 0; x < actualWallLength; x++){
+        for(x = 0; x < WALL_LENGTH; x++){
 
-            if( (wall->direction == moveWest && wall->state == closing) || (wall->direction == moveEast && wall->state == opening) ){
+            if(wall->state == closed){
                 world[wallX + x][1 + yOffset][wallZ] = INNER_WALL_COLOUR;
             }
-            else{
-                world[wallX + WALL_LENGTH - x - 1][1 + yOffset][wallZ] = INNER_WALL_COLOUR;
-            }
-
-            /// Handle: hitting the player
-            getViewPosition(&playerXf, &playerYf, &playerZf);
-            playerX = (int)playerXf * -1;
-            playerY = (int)playerYf * -1;
-            playerZ = (int)playerZf * -1;
-
-            for(y = 0; y < WALL_HEIGHT; y++){
-                if(playerX == wallX + x && playerZ == wallZ && y + 1 ==  playerY){
-                    setViewPosition(playerXf, playerYf, playerZf - 1);
-                }
-            }
-
 
         }
 
@@ -1254,7 +1136,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
     /// Malloc the new wall
     ///
     Wall *newWall = (Wall*)malloc(sizeof(Wall));
-    newWall->direction = notMoving;
+  //  newWall->direction = notMoving;
     newWall->x = x;
     newWall->z = z;
 
@@ -1265,12 +1147,12 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
     /// Randomly decide if the wall should be open or closed
     ///
     if(PercentChance(genInfo->spawnChance + genInfo->spawnChanceModifier) && genInfo->wallsCreated < MAX_WALL_COUNT){
-        newWall->percentClosed = 100;
+        //newWall->percentClosed = 100;
         newWall->state = closed;
         genInfo->wallsCreated++;
     }
     else{
-        newWall->percentClosed = 0;
+      //  newWall->percentClosed = 0;
         newWall->state = open;
     }
 
@@ -1298,7 +1180,71 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
 ///
 /// AnimateWalls
 ///
-void AnimateWalls(){
+void AnimateWalls(int deltaTime){
+/// Moves the walls: ...
+    Pillar *selectedPillar;
+
+    int startX, startZ;
+    int cur_x, cur_z;
+    int percentLength;
+
+    float deltaPercent;
+
+
+    selectedPillar = &(pillars[movingPillar_x][movingPillar_z]);
+
+
+    deltaPercent = (((float)deltaTime) / (float)CHANGE_WALLS_TIME_MS) * 100;
+    wallPercent += deltaPercent;
+
+
+    percentLength = (WALL_LENGTH * wallPercent) / 100;
+    if(percentLength > 100)
+    {
+        percentLength = 100;
+        selectedPillar->wall[openingWall]->state = open;
+        selectedPillar->wall[closingWall]->state = closed;
+    }
+
+    startX = (selectedPillar->wall[closingWall]->x + 1) * (WALL_LENGTH + 1);
+    startZ = (selectedPillar->wall[closingWall]->z + 1) * (WALL_LENGTH + 1);
+
+    ///
+    /// Close wall
+    ///
+    if(closingWall == north){
+        startZ--;
+
+        for(cur_z = 0; cur_z < percentLength; cur_z++){
+          //  world[startX][1][startZ - cur_z] = 5;
+        }
+    }
+    else if(closingWall == east){
+        startX++;
+
+        for(cur_x = 0; cur_x < percentLength; cur_x++){
+        //    world[startX + cur_x][1][startZ] = 5;
+        }
+    }
+    else if(closingWall = south){
+        startZ++;
+
+        for(cur_z = 0; cur_z < percentLength; cur_z++){
+            world[startX][1][startZ + cur_z] = 5;
+        }
+    }
+    else if(closingWall == west){
+        startX--;
+
+        for(cur_x = 0; cur_x < percentLength; cur_x++){
+          //  world[startX - cur_x][1][startZ] = 5;
+        }
+    }
+
+
+    ///
+    /// Open wall
+    ///
 
 }
 

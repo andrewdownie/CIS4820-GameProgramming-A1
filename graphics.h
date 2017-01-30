@@ -35,8 +35,6 @@ typedef enum _Direction{
 } MovementDirection;
 
 typedef struct _Wall{
-    float percentClosed;
-    MovementDirection direction;
     WallState state;
     int x, z;
 } Wall;
