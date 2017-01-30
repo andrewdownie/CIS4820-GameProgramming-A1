@@ -58,7 +58,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 5000
+#define CHANGE_WALLS_TIME_MS 200
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -1013,9 +1013,9 @@ void ChangeWalls(){
         movingPillar_z = randZ;
 
 
-        //if(Pillar_WallCount(currentPillar) != 0 && Pillar_WallCount(currentPillar) != 4){
+        if(Pillar_WallCount(currentPillar) != 0 && Pillar_WallCount(currentPillar) != 4){
             break;
-        //}
+        }
 
         i++;
         if(i > 1000){
@@ -1094,11 +1094,16 @@ void ChangeWalls(){
     ///
     /// Pick the walls to open / close
     ///
-    randClosedWall = rand() % closedWallCount;
+    //if(closedWallCount > 0){
+        randClosedWall = rand() % closedWallCount;
+    //}
 
 
+    //if(openWallCount > 0){
+        randOpenWall = rand() % openWallCount;
+    //}
 
-    randOpenWall = rand() % openWallCount;
+
 
 
     openingWall = closedWalls[randClosedWall];
