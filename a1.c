@@ -58,7 +58,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 3000
+#define CHANGE_WALLS_TIME_MS 5000
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -774,9 +774,7 @@ void SetupWalls(){
             /// North wall
             ///
             if(z > 0){
-                //if(Pillar_WallCount( &(pillars[x][z - 1]) ) < 3){
-                    SetupWall( &(pillars[x][z].wall[north]), &(pillars[x][z - 1].wall[south]), &genInfo, x, z);
-                //}
+                SetupWall( &(pillars[x][z].wall[north]), &(pillars[x][z - 1].wall[south]), &genInfo, x, z);
             }
             else{
                 SetupWall( &(pillars[x][z].wall[north]), NULL, &genInfo, x, z);
@@ -786,10 +784,8 @@ void SetupWalls(){
             ///
             /// South wall
             ///
-            if(z < WALL_COUNT_Z - 1){
-            //    if(Pillar_WallCount( &(pillars[x][z + 1]) ) < 3){
-                    SetupWall( &(pillars[x][z].wall[south]), &(pillars[x][z + 1].wall[north]), &genInfo, x, z);
-            //    }
+            if(z < WALL_COUNT_Z - 2){
+                SetupWall( &(pillars[x][z].wall[south]), &(pillars[x][z + 1].wall[north]), &genInfo, x, z);
             }
             else{
                 SetupWall( &(pillars[x][z].wall[south]), NULL, &genInfo, x, z);
@@ -800,9 +796,8 @@ void SetupWalls(){
             /// East Wall
             ///
             if(x < WALL_COUNT_X - 1){
-            //    if(Pillar_WallCount( &(pillars[x + 1][z]) ) < 3){
-                    SetupWall( &(pillars[x][z].wall[east]), &(pillars[x + 1][z].wall[west]), &genInfo, x, z);
-                //}
+                SetupWall( &(pillars[x][z].wall[east]), &(pillars[x + 1][z].wall[west]), &genInfo, x, z);
+
             }
             else{
                 SetupWall( &(pillars[x][z].wall[east]), NULL, &genInfo, x, z);
@@ -813,9 +808,8 @@ void SetupWalls(){
             /// West Wall
             ///
             if(x > 0){
-            //    if(Pillar_WallCount( &(pillars[x - 1][z]) ) < 3){
-                    SetupWall( &(pillars[x][z].wall[west]), &(pillars[x - 1][z].wall[east]), &genInfo, x, z);
-            //    }
+                SetupWall( &(pillars[x][z].wall[west]), &(pillars[x - 1][z].wall[east]), &genInfo, x, z);
+
             }
             else{
                 SetupWall( &(pillars[x][z].wall[west]), NULL, &genInfo, x, z);
@@ -986,8 +980,8 @@ void ChangeWalls(){
         closedWalls[i] = -1;
     }
 
-    movingPillar_x = 0;
-    movingPillar_z = 0;
+    movingPillar_x = -1;
+    movingPillar_z = -1;
     openingWall = -1;
     closingWall = -1;
 
@@ -1100,18 +1094,15 @@ void ChangeWalls(){
     ///
     /// Pick the walls to open / close
     ///
-    if(closedWallCount > 0){
-        randClosedWall = rand() % closedWallCount;
-
-    }
+    randClosedWall = rand() % closedWallCount;
 
 
-    if(openWallCount > 0){
-        randOpenWall = rand() % openWallCount;
-    }
+
+    randOpenWall = rand() % openWallCount;
+
 
     openingWall = closedWalls[randClosedWall];
-    openingWall = north; //TODO: for debugging
+    //openingWall = north; //TODO: for debugging
     closingWall = openWalls[randOpenWall];
 
     pillars[movingPillar_x][movingPillar_z].wall[openingWall]->state = opening;
@@ -1177,7 +1168,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
         newWall->state = open;
     }
 
-    newWall->state = closed;//TODO: this is for debugging
+    //newWall->state = closed;//TODO: this is for debugging
 
     ///
     /// Use the spawnChanceModifier to push the spawnChance
@@ -1193,7 +1184,7 @@ void SetupWall(Wall **targetWall, Wall **adjacentWall, GenerationInfo *genInfo, 
     ///
     *targetWall = newWall;
 
-    if(adjacentWall != NULL){
+    if(adjacentWall != NULL && *adjacentWall == NULL){
         *adjacentWall = newWall;
     }
 }
@@ -1248,24 +1239,24 @@ void AnimateWalls(int deltaTime){
       if(closingWall == north){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-            //  world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = INNER_WALL_COLOUR;
+              world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = INNER_WALL_COLOUR;
           }
       }
       if(closingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-            //  world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
+              world[startX + cur_x + 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
       }
       if(closingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-            //  world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
+              world[startX][1 + y][startZ + cur_z + 1] = INNER_WALL_COLOUR;
           }
       }
       if(closingWall == west){
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-             // world[startX - cur_x - 1][1 + y][startZ] = INNER_WALL_COLOUR;
+              world[startX - cur_x - 1][1 + y][startZ] = INNER_WALL_COLOUR;
           }
       }
 
@@ -1285,19 +1276,19 @@ void AnimateWalls(int deltaTime){
       if(openingWall == east){
 
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-             // world[startX - cur_x + WALL_LENGTH][1 + y][startZ] = 0;
+              world[startX - cur_x + WALL_LENGTH][1 + y][startZ] = 0;
           }
 
       }
       if(openingWall == south){
 
           for(cur_z = 0; cur_z < actualLength; cur_z++){
-            //  world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = 0;
+              world[startX][1 + y][startZ - cur_z + WALL_LENGTH] = 0;
           }
       }
       if(openingWall == west){
           for(cur_x = 0; cur_x < actualLength; cur_x++){
-            //  world[startX + cur_x + 1][1 + y][startZ] = 0;
+              world[startX + cur_x + 1][1 + y][startZ] = 0;
           }
 
       }

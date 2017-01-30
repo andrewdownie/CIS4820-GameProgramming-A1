@@ -34,6 +34,7 @@ typedef struct _Wall{
 
 typedef struct _Pillar{
     //Wall *north, *south, *east, *west;
+    //Pillar *pillar[4];
 
     Wall *wall[4];
 } Pillar;
