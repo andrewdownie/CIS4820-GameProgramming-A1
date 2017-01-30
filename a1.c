@@ -57,7 +57,7 @@
 ///
 /// Wall and floor settings -------------------------------
 ///
-#define CHANGE_WALLS_TIME_MS 100
+#define CHANGE_WALLS_TIME_MS 1600
 #define AUTO_CHANGE_WALLS 1
 #define TARGET_WALL_COUNT 25
 #define MAX_WALL_COUNT 21
@@ -69,8 +69,8 @@
 
 #define WALL_COUNT_X 6
 #define WALL_COUNT_Z 6
-#define WALL_HEIGHT 2
 #define WALL_LENGTH 5
+#define WALL_HEIGHT 2
 
 
 
@@ -263,7 +263,7 @@ void collisionResponse() {
 
 
     ///
-    /// PLAYER MOVEMENT: Collision with walls and floors
+    /// PLAYER MOVEMENT: Collision with walls and floors and ceiling
     ///
 
     /// Handle: camera moving down into blocks below
@@ -277,6 +277,36 @@ void collisionResponse() {
 
     }
 
+    /// Handle: camera moving outside of the gamearea
+      if(curIndex_y >= WORLDY - 1){
+          curPos_y = (WORLDY - 1) * -1;
+          curIndex_y = curPos_y;
+          currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
+      }
+
+      if(curIndex_x < 1){
+          curPos_x = -1;
+          curIndex_x = curPos_x;
+          currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
+      }
+      else if(curIndex_x >= MAP_SIZE_X - 2){
+          curPos_x = (MAP_SIZE_X - 2) * -1;
+          curIndex_x = curPos_x;
+          currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
+      }
+
+      if(curIndex_z < 1){
+          curPos_z = -1;
+          curIndex_z = curPos_z;
+          currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
+      }
+      else if(curIndex_z >= MAP_SIZE_Z - 2){
+        curPos_z = (MAP_SIZE_Z - 2) * -1;
+        curIndex_z = curPos_z;
+        currentPiece = WalkablePiece(curIndex_x, curIndex_y, curIndex_z);
+      }
+
+
     /// Handle: camera moving sideways into walls
     if(currentPiece == NOT_WALKABLE){
 
@@ -286,6 +316,7 @@ void collisionResponse() {
         }
 
     }
+
 
 
     ///
@@ -459,19 +490,19 @@ void update() {
 void mouse(int button, int state, int x, int y) {
 /// called by GLUT when a mouse button is pressed or released.
 
-    if (button == GLUT_LEFT_BUTTON)
-    //printf("left button - ");
+    /*if (button == GLUT_LEFT_BUTTON)
+    printf("left button - ");
     else if (button == GLUT_MIDDLE_BUTTON)
-    //printf("middle button - ");
+    printf("middle button - ");
     else
-    //printf("right button - ");
+    printf("right button - ");
 
     if (state == GLUT_UP)
-    //printf("up - ");
+    printf("up - ");
     else
-    //printf("down - ");
+    printf("down - ");
 
-    //printf("%d %d\n", x, y);
+    printf("%d %d\n", x, y);*/
 }
 
 
@@ -619,6 +650,7 @@ void BuildWorldShell(){
             }
         }
     }
+
 
     ///
     /// Build the floor
